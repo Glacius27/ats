@@ -1,0 +1,21 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-candidate-service", "ats-candidate-service\ats-candidate-service.csproj", "{CD2EE892-4D48-4451-A72F-CFC653B9C5AA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{66752812-540A-4C2B-A81B-EAEA0C995404}"
+	ProjectSection(SolutionItems) = preProject
+		compose.yaml = compose.yaml
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CD2EE892-4D48-4451-A72F-CFC653B9C5AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD2EE892-4D48-4451-A72F-CFC653B9C5AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD2EE892-4D48-4451-A72F-CFC653B9C5AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD2EE892-4D48-4451-A72F-CFC653B9C5AA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
