@@ -319,7 +319,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "PUT http://localhost:5080/api/vacancies/{{vacancyId}}\nContent-Type: application/json\n\n{\n  \"id\": \"{{vacancyId}}\",\n  \"title\": \"Senior Backend Developer\",\n  \"description\": \"C#, MongoDB, Kafka\",\n  \"location\": \"Санкт-Петербург\"\n}",
+							"raw": "{\n  \"id\": \"{{vacancyId}}\",\n  \"title\": \"Senior Backend Developer\",\n  \"description\": \"C#, MongoDB, Kafka\",\n  \"department\": \"Блок информационных технологий\",\n  \"RecruiterId\": \"0\",\n  \"location\": \"Санкт-Петербург\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
