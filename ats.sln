@@ -3,11 +3,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-candidate-service", "ats-candidate-service\ats-candidate-service.csproj", "{CD2EE892-4D48-4451-A72F-CFC653B9C5AA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{66752812-540A-4C2B-A81B-EAEA0C995404}"
-	ProjectSection(SolutionItems) = preProject
-		compose.yaml = compose.yaml
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-vacancy-service", "ats-vacancy-service\ats-vacancy-service.csproj", "{E4353FC8-03D9-4D7A-B067-B4F17CF02345}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-recruitment-service", "ats-recruitment-service\ats-recruitment-service.csproj", "{D9E44C5E-3FE5-4DB9-AD7F-505C1317DB8E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,5 +22,9 @@ Global
 		{E4353FC8-03D9-4D7A-B067-B4F17CF02345}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4353FC8-03D9-4D7A-B067-B4F17CF02345}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4353FC8-03D9-4D7A-B067-B4F17CF02345}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9E44C5E-3FE5-4DB9-AD7F-505C1317DB8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9E44C5E-3FE5-4DB9-AD7F-505C1317DB8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9E44C5E-3FE5-4DB9-AD7F-505C1317DB8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9E44C5E-3FE5-4DB9-AD7F-505C1317DB8E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

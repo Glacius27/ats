@@ -1,0 +1,71 @@
+{
+  "info": {
+    "name": "RecruitmentService API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Application",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:5000/api/applications", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "applications"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"candidateId\": \"123\",\n  \"vacancyId\": \"456\",\n  \"status\": \"Pending\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Application by Id",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:5000/api/applications/{{applicationId}}", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "applications", "{{applicationId}}"] }
+      }
+    },
+    {
+      "name": "Update Application",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:5000/api/applications/{{applicationId}}", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "applications", "{{applicationId}}"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"id\": {{applicationId}},\n  \"candidateId\": \"123\",\n  \"vacancyId\": \"456\",\n  \"status\": \"Approved\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Delete Application",
+      "request": {
+        "method": "DELETE",
+        "url": { "raw": "http://localhost:5000/api/applications/{{applicationId}}", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "applications", "{{applicationId}}"] }
+      }
+    },
+    {
+      "name": "Create Feedback",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:5000/api/feedbacks", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "feedbacks"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"applicationId\": {{applicationId}},\n  \"authorId\": \"recruiter1\",\n  \"comments\": \"Strong candidate\",\n  \"score\": 5\n}"
+        }
+      }
+    },
+    {
+      "name": "Create Offer",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": { "raw": "http://localhost:5000/api/offers", "protocol": "http", "host": ["localhost"], "port": "5000", "path": ["api", "offers"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"applicationId\": {{applicationId}},\n  \"positionTitle\": \"Backend Developer\",\n  \"salary\": 200000,\n  \"status\": \"Draft\"\n}"
+        }
+      }
+    }
+  ]
+}

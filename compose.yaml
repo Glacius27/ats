@@ -1,4 +1,4 @@
-﻿services:
+﻿ervices:
   ats-candidate-service:
     image: ats-candidate-service
     build:
