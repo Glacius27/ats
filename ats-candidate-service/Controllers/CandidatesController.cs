@@ -1,3 +1,4 @@
+using ats;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CandidateService.Data;
@@ -10,10 +11,12 @@ namespace CandidateService.Controllers
     public class CandidatesController : ControllerBase
     {
         private readonly CandidateContext _context;
+        private readonly ResumeStorageService _storage;
 
-        public CandidatesController(CandidateContext context)
+        public CandidatesController(CandidateContext context, ResumeStorageService storage)
         {
             _context = context;
+            _storage = storage;
         }
 
         [HttpGet]
@@ -30,12 +33,35 @@ namespace CandidateService.Controllers
             return candidate;
         }
 
+        // [HttpPost]
+        // public async Task<ActionResult<Candidate>> CreateCandidate(Candidate candidate)
+        // {
+        //     _context.Candidates.Add(candidate);
+        //     await _context.SaveChangesAsync();
+        //     return CreatedAtAction(nameof(GetCandidate), new { id = candidate.Id }, candidate);
+        // }
+        
         [HttpPost]
-        public async Task<ActionResult<Candidate>> CreateCandidate(Candidate candidate)
+        public async Task<IActionResult> Create([FromForm] CandidateCreateRequest request)
         {
+            var candidate = new Candidate
+            {
+                FullName = request.FullName,
+                Email = request.Email,
+                Phone = request.Phone
+            };
+
+            if (request.Resume != null && request.Resume.Length > 0)
+            {
+                using var stream = request.Resume.OpenReadStream();
+                await _storage.UploadResumeAsync(request.Resume.FileName, stream, request.Resume.ContentType);
+                candidate.ResumeFileName = request.Resume.FileName;
+            }
+
             _context.Candidates.Add(candidate);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetCandidate), new { id = candidate.Id }, candidate);
+
+            return Ok(candidate);
         }
 
         [HttpPut("{id}")]
@@ -59,6 +85,19 @@ namespace CandidateService.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+        
+        [HttpGet("{id}/resume")]
+        public async Task<IActionResult> GetResume(int id)
+        {
+            var candidate = await _context.Candidates.FindAsync(id);
+            if (candidate == null || string.IsNullOrEmpty(candidate.ResumeFileName))
+                return NotFound("Резюме не найдено");
+
+            var stream = await _storage.GetFileAsync(candidate.ResumeFileName);
+
+            // можно улучшить — хранить ContentType вместе с файлом
+            return File(stream, "application/octet-stream", candidate.ResumeFileName);
         }
     }
 }

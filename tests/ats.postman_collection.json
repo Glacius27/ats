@@ -1,0 +1,369 @@
+{
+	"info": {
+		"_postman_id": "d5ddf5cd-0a1d-48df-9f06-e38ec3b30136",
+		"name": "ats",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "4846465"
+	},
+	"item": [
+		{
+			"name": "ats-candidate-service",
+			"item": [
+				{
+					"name": "CreateCandidate",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let json = pm.response.json();",
+									"pm.globals.set(\"candidateId\", json.id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"packages": {},
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "fullName",
+									"value": "Герман Заблудин",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "g.zabludin@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "+79263134737",
+									"type": "text"
+								},
+								{
+									"key": "Resume",
+									"type": "file",
+									"src": "/Users/german/RiderProjects/Заблудин Герман.pdf"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:5076/api/candidates",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5076",
+							"path": [
+								"api",
+								"candidates"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetCandidate",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5076/api/candidates/{{candidateId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5076",
+							"path": [
+								"api",
+								"candidates",
+								"{{candidateId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetCandidateResume",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5076/api/candidates/{{candidateId}}/resume",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5076",
+							"path": [
+								"api",
+								"candidates",
+								"{{candidateId}}",
+								"resume"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteCandidate",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "fullName",
+									"value": "Герман Заблудин",
+									"type": "text"
+								},
+								{
+									"key": "email",
+									"value": "g.zabludin@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "phone",
+									"value": "+79263134737",
+									"type": "text"
+								},
+								{
+									"key": "Resume",
+									"type": "file",
+									"src": "/Users/german/RiderProjects/Заблудин Герман.pdf"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:5076/api/candidates/{{candidateId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5076",
+							"path": [
+								"api",
+								"candidates",
+								"{{candidateId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ats-vacancy-service",
+			"item": [
+				{
+					"name": "CreateVacancy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"pm.globals.set(\"vacancyId\", jsonData.id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Backend Developer\",\n  \"description\": \"Опыт в C#, MongoDB\",\n  \"location\": \"Москва\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5039/api/Vacancies",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5039",
+							"path": [
+								"api",
+								"Vacancies"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAllVacancies",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Backend Developer\",\n  \"description\": \"Опыт в C#, MongoDB\",\n  \"location\": \"Москва\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5039/api/Vacancies/{{vacancyId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5039",
+							"path": [
+								"api",
+								"Vacancies",
+								"{{vacancyId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetVacancyByID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Backend Developer\",\n  \"description\": \"Опыт в C#, MongoDB\",\n  \"location\": \"Москва\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5039/api/Vacancies/{{vacancyId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5039",
+							"path": [
+								"api",
+								"Vacancies",
+								"{{vacancyId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateVacancy",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "PUT http://localhost:5080/api/vacancies/{{vacancyId}}\nContent-Type: application/json\n\n{\n  \"id\": \"{{vacancyId}}\",\n  \"title\": \"Senior Backend Developer\",\n  \"description\": \"C#, MongoDB, Kafka\",\n  \"location\": \"Санкт-Петербург\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5039/api/Vacancies/{{vacancyId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5039",
+							"path": [
+								"api",
+								"Vacancies",
+								"{{vacancyId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "DeleteVacancy",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5039/api/Vacancies/{{vacancyId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5039",
+							"path": [
+								"api",
+								"Vacancies",
+								"{{vacancyId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

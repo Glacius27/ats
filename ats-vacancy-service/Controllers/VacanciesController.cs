@@ -1,4 +1,6 @@
+using ats_vacancy_service.DTO;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using VacancyService.Data;
 using VacancyService.Models;
 
@@ -27,11 +29,35 @@ namespace VacancyService.Controllers
             return vacancy;
         }
 
+        // [HttpPost]
+        // public async Task<IActionResult> Create(Vacancy vacancy)
+        // {
+        //     await _repository.CreateAsync(vacancy);
+        //     return CreatedAtAction(nameof(GetById), new { id = vacancy.Id }, vacancy);
+        // }
+        
         [HttpPost]
-        public async Task<IActionResult> Create(Vacancy vacancy)
+        public async Task<ActionResult<VacancyResponse>> CreateVacancy([FromBody] CreateVacancyRequest request)
         {
+            var vacancy = new Vacancy
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                Title = request.Title,
+                Description = request.Description,
+                Location = request.Location
+            };
+
             await _repository.CreateAsync(vacancy);
-            return CreatedAtAction(nameof(GetById), new { id = vacancy.Id }, vacancy);
+
+            var response = new VacancyResponse
+            {
+                Id = vacancy.Id,
+                Title = vacancy.Title,
+                Description = vacancy.Description,
+                Location = vacancy.Location
+            };
+
+            return CreatedAtAction(nameof(GetById), new { id = vacancy.Id }, response);
         }
 
         [HttpPut("{id}")]

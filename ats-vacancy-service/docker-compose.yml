@@ -10,19 +10,19 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  vacancy-service:
-    build: .
-    container_name: ats-vacancy-service
-    restart: always
-    ports:
-      - "5000:5000"
-    depends_on:
-      - mongodb
-    environment:
-      - ASPNETCORE_URLS=http://+:5000
-      - MongoDbSettings__ConnectionString=mongodb://mongodb:27017
-      - MongoDbSettings__DatabaseName=ats_vacancy_db
-      - MongoDbSettings__VacanciesCollection=Vacancies
+  # vacancy-service:
+  #   build: .
+  #   container_name: ats-vacancy-service
+  #   restart: always
+  #   ports:
+  #     - "5000:5000"
+  #   depends_on:
+  #     - mongodb
+  #   environment:
+  #     - ASPNETCORE_URLS=http://+:5000
+  #     - MongoDbSettings__ConnectionString=mongodb://mongodb:27017
+  #     - MongoDbSettings__DatabaseName=ats_vacancy_db
+  #     - MongoDbSettings__VacanciesCollection=Vacancies
 
 volumes:
   mongo_data:
