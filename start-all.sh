@@ -4,6 +4,7 @@ set -e
 SERVICES=(
   "ats-candidate-service"
   "ats-vacancy-service"
+  "ats-recruitment-service"
 
 )
 

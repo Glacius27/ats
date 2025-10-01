@@ -1,0 +1,17 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: ats-recruitment-db
+    environment:
+      POSTGRES_USER: ats
+      POSTGRES_PASSWORD: ats_pass
+      POSTGRES_DB: ats_recruitment
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

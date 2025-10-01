@@ -26,8 +26,11 @@
 						{
 							"listen": "prerequest",
 							"script": {
-								"packages": {},
-								"type": "text/javascript"
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
 							}
 						}
 					],
@@ -55,7 +58,7 @@
 								{
 									"key": "Resume",
 									"type": "file",
-									"src": "/Users/german/RiderProjects/Заблудин Герман.pdf"
+									"src": "postman-cloud:///1f09e92f-c415-4800-bff1-6c4f31e9adf5"
 								}
 							]
 						},
@@ -124,6 +127,69 @@
 								"candidates",
 								"{{candidateId}}",
 								"resume"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "UpdateCandidate",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\n{\n  \"status\": \"На собеседовании\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5076/api/candidates/{{candidateId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5076",
+							"path": [
+								"api",
+								"candidates",
+								"{{candidateId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CheckUpdate",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5076/api/candidates/{{candidateId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5076",
+							"path": [
+								"api",
+								"candidates",
+								"{{candidateId}}"
 							]
 						}
 					},
@@ -358,6 +424,256 @@
 								"api",
 								"Vacancies",
 								"{{vacancyId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ats-recruitment-service",
+			"item": [
+				{
+					"name": "Create Application",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"pm.globals.set(\"applicationId\", jsonData.id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"candidateId\": \"123\",\n  \"vacancyId\": \"456\",\n  \"status\": \"Pending\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:5191/api/applications",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5191",
+							"path": [
+								"api",
+								"applications"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Application by Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5191/api/applications/{{applicationId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5191",
+							"path": [
+								"api",
+								"applications",
+								"{{applicationId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Application(Status)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\"InReview\"\n"
+						},
+						"url": {
+							"raw": "http://localhost:5191/api/applications/{{applicationId}}/status",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5191",
+							"path": [
+								"api",
+								"applications",
+								"{{applicationId}}",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Feedback",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"applicationId\": {{applicationId}},\n  \"authorId\": \"recruiter1\",\n  \"comments\": \"Strong candidate\",\n  \"score\": 5\n}"
+						},
+						"url": {
+							"raw": "http://localhost:5191/api/applications/{{applicationId}}/feedback",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5191",
+							"path": [
+								"api",
+								"applications",
+								"{{applicationId}}",
+								"feedback"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Feedback",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"applicationId\": {{applicationId}},\n  \"authorId\": \"recruiter1\",\n  \"comments\": \"Strong candidate\",\n  \"score\": 5\n}"
+						},
+						"url": {
+							"raw": "http://localhost:5191/api/applications/{{applicationId}}/feedback",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5191",
+							"path": [
+								"api",
+								"applications",
+								"{{applicationId}}",
+								"feedback"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Offer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"applicationId\": {{applicationId}},\n  \"positionTitle\": \"Backend Developer\",\n  \"salary\": 200000,\n  \"status\": \"Draft\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:5191/api/Applications/{{applicationId}}/offer",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5191",
+							"path": [
+								"api",
+								"Applications",
+								"{{applicationId}}",
+								"offer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Offer",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:5191/api/Applications/offer/{{offerId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5191",
+							"path": [
+								"api",
+								"Applications",
+								"offer",
+								"{{offerId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Application",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5191/api/applications/{{applicationId}}",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5191",
+							"path": [
+								"api",
+								"applications",
+								"{{applicationId}}"
 							]
 						}
 					},
