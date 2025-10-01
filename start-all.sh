@@ -9,7 +9,7 @@ SERVICES=(
 
 for service in "${SERVICES[@]}"; do
   echo "🚀 Запуск docker-compose в $service ..."
-  (cd "$service" && docker-compose up -d)
+  (cd "$service" && docker compose up -d)
 done
 
 echo "✅ Все сервисы запущены!"
