@@ -1,8 +1,10 @@
+using ats_candidate_service.DTO;
 using ats;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CandidateService.Data;
 using CandidateService.Models;
+
 
 namespace CandidateService.Controllers
 {
@@ -98,6 +100,22 @@ namespace CandidateService.Controllers
 
             // можно улучшить — хранить ContentType вместе с файлом
             return File(stream, "application/octet-stream", candidate.ResumeFileName);
+        }
+        // PATCH api/candidates/{id}
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchCandidate(int id, [FromBody] CandidatePatchRequest request)
+        {
+            var candidate = await _context.Candidates.FindAsync(id);
+            if (candidate == null) return NotFound();
+
+            if (request.FullName != null) candidate.FullName = request.FullName;
+            if (request.Email != null) candidate.Email = request.Email;
+            if (request.Phone != null) candidate.Phone = request.Phone;
+            if (request.Status != null) candidate.Status = request.Status;
+            if (request.ResumeFileName != null) candidate.ResumeFileName = request.ResumeFileName;
+
+            await _context.SaveChangesAsync();
+            return Ok(candidate);
         }
     }
 }
