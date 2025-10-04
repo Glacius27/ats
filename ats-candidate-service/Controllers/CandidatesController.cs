@@ -55,9 +55,10 @@ namespace CandidateService.Controllers
 
             if (request.Resume != null && request.Resume.Length > 0)
             {
+                var _fileName = String.Format("{0}_{1}", DateTime.Now.ToString("yyyyMMddHHmmss"), request.Resume.FileName);
                 using var stream = request.Resume.OpenReadStream();
-                await _storage.UploadResumeAsync(request.Resume.FileName, stream, request.Resume.ContentType);
-                candidate.ResumeFileName = request.Resume.FileName;
+                await _storage.UploadResumeAsync(_fileName, stream, request.Resume.ContentType);
+                candidate.ResumeFileName = _fileName;
             }
 
             _context.Candidates.Add(candidate);

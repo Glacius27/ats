@@ -20,17 +20,30 @@
 									"pm.globals.set(\"candidateId\", json.id);"
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						},
 						{
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									""
+									"const resumePath = pm.environment.get(\"Resume\");",
+									"",
+									"if (resumePath && pm.request.body && pm.request.body.mode === \"formdata\") {",
+									"    let formdata = pm.request.body.formdata;",
+									"",
+									"    // Пробегаемся по полям и ищем Resume",
+									"    formdata.all().forEach((item) => {",
+									"        if (item.key === \"Resume\") {",
+									"            item.src = resumePath; // для Newman это путь с диска",
+									"        }",
+									"    });",
+									"}"
 								],
 								"type": "text/javascript",
-								"packages": {}
+								"packages": {},
+								"requests": {}
 							}
 						}
 					],
@@ -58,7 +71,7 @@
 								{
 									"key": "Resume",
 									"type": "file",
-									"src": "postman-cloud:///1f09e92f-c415-4800-bff1-6c4f31e9adf5"
+									"src": "/Users/german/RiderProjects/ats/tests/resume.pdf"
 								}
 							]
 						},
@@ -543,7 +556,7 @@
 							"raw": "{\n  \"applicationId\": {{applicationId}},\n  \"authorId\": \"recruiter1\",\n  \"comments\": \"Strong candidate\",\n  \"score\": 5\n}"
 						},
 						"url": {
-							"raw": "http://localhost:5191/api/applications/{{applicationId}}/feedback",
+							"raw": "http://localhost:5191/api/Feedbacks",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -551,9 +564,7 @@
 							"port": "5191",
 							"path": [
 								"api",
-								"applications",
-								"{{applicationId}}",
-								"feedback"
+								"Feedbacks"
 							]
 						}
 					},
@@ -561,9 +572,6 @@
 				},
 				{
 					"name": "Create Feedback",
-					"protocolProfileBehavior": {
-						"disableBodyPruning": true
-					},
 					"request": {
 						"method": "GET",
 						"header": [
@@ -572,12 +580,8 @@
 								"value": "application/json"
 							}
 						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"applicationId\": {{applicationId}},\n  \"authorId\": \"recruiter1\",\n  \"comments\": \"Strong candidate\",\n  \"score\": 5\n}"
-						},
 						"url": {
-							"raw": "http://localhost:5191/api/applications/{{applicationId}}/feedback",
+							"raw": "http://localhost:5191/api/Feedbacks/application/{{applicationId}}",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -585,9 +589,9 @@
 							"port": "5191",
 							"path": [
 								"api",
-								"applications",
-								"{{applicationId}}",
-								"feedback"
+								"Feedbacks",
+								"application",
+								"{{applicationId}}"
 							]
 						}
 					},
@@ -595,6 +599,20 @@
 				},
 				{
 					"name": "Create Offer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"pm.globals.set(\"offerID\", jsonData.id);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -608,7 +626,7 @@
 							"raw": "{\n  \"applicationId\": {{applicationId}},\n  \"positionTitle\": \"Backend Developer\",\n  \"salary\": 200000,\n  \"status\": \"Draft\"\n}"
 						},
 						"url": {
-							"raw": "http://localhost:5191/api/Applications/{{applicationId}}/offer",
+							"raw": "http://localhost:5191/api/Offers",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -616,9 +634,7 @@
 							"port": "5191",
 							"path": [
 								"api",
-								"Applications",
-								"{{applicationId}}",
-								"offer"
+								"Offers"
 							]
 						}
 					},
@@ -642,7 +658,7 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "http://localhost:5191/api/Applications/offer/{{offerId}}",
+							"raw": "http://localhost:5191/api/Offers/{{offerID}}",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -650,21 +666,20 @@
 							"port": "5191",
 							"path": [
 								"api",
-								"Applications",
-								"offer",
-								"{{offerId}}"
+								"Offers",
+								"{{offerID}}"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Delete Application",
+					"name": "Delete Offer",
 					"request": {
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:5191/api/applications/{{applicationId}}",
+							"raw": "http://localhost:5191/api/Offers/{{offerID}}",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -672,8 +687,57 @@
 							"port": "5191",
 							"path": [
 								"api",
-								"applications",
-								"{{applicationId}}"
+								"Offers",
+								"{{offerID}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "ats-interview-service",
+			"item": [
+				{
+					"name": "CreateInterview",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json();",
+									"pm.globals.set(\"interviewId\", jsonData.id);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"candidateId\": 1,\n  \"vacancyId\": 2,\n  \"scheduledAt\": \"2025-10-05T10:00:00Z\",\n  \"interviewer\": \"recruiter1\",\n  \"status\": \"Scheduled\",\n  \"feedbacks\": [\n    {\n      \"authorId\": \"manager1\",\n      \"comments\": \"Good communication skills\",\n      \"score\": 5\n    },\n    {\n      \"authorId\": \"techlead\",\n      \"comments\": \"Strong technical background\",\n      \"score\": 4\n    }\n  ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:5259/api/interviews/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5259",
+							"path": [
+								"api",
+								"interviews",
+								""
 							]
 						}
 					},

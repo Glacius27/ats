@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ats_recruitment_service.Data;
+using ats_recruitment_service.DTO;
 using ats_recruitment_service.Models;
 
 namespace ats_recruitment_service.Controllers
@@ -24,15 +25,33 @@ namespace ats_recruitment_service.Controllers
                 .ToListAsync();
         }
 
+        // [HttpPost]
+        // public async Task<ActionResult<Feedback>> Create(Feedback feedback)
+        // {
+        //     feedback.CreatedAt = DateTime.UtcNow;
+        //
+        //     _context.Feedbacks.Add(feedback);
+        //     await _context.SaveChangesAsync();
+        //
+        //     return CreatedAtAction(nameof(GetByApplication), new { applicationId = feedback.ApplicationId }, feedback);
+        // }
+        
         [HttpPost]
-        public async Task<ActionResult<Feedback>> Create(Feedback feedback)
+        public async Task<IActionResult> Create([FromBody] FeedbackDto dto)
         {
-            feedback.CreatedAt = DateTime.UtcNow;
+            var feedback = new Feedback
+            {
+                ApplicationId = dto.ApplicationId,
+                AuthorId = dto.AuthorId,
+                Comments = dto.Comments,
+                Score = dto.Score
+            };
 
             _context.Feedbacks.Add(feedback);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetByApplication), new { applicationId = feedback.ApplicationId }, feedback);
+            //return CreatedAtAction(nameof(GetByApplication), new { id = feedback.Id }, feedback);
+            return Ok(feedback);
         }
 
         [HttpDelete("{id}")]

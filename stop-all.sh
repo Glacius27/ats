@@ -5,6 +5,7 @@ SERVICES=(
   "ats-candidate-service"
   "ats-vacancy-service"
   "ats-recruitment-service"
+  "ats-interview-service"
 )
 
 for service in "${SERVICES[@]}"; do
