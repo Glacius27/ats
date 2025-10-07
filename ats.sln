@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-recruitment-service", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-interview-service", "ats-interview-service\ats-interview-service.csproj", "{C331444D-6CAD-474E-9B86-FC032D5B7599}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-authorization-service", "ats-authorization-service\ats-authorization-service.csproj", "{7AAE52F0-BD5C-4C21-AD0E-41D312B5E2B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,5 +34,9 @@ Global
 		{C331444D-6CAD-474E-9B86-FC032D5B7599}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C331444D-6CAD-474E-9B86-FC032D5B7599}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C331444D-6CAD-474E-9B86-FC032D5B7599}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AAE52F0-BD5C-4C21-AD0E-41D312B5E2B4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AAE52F0-BD5C-4C21-AD0E-41D312B5E2B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AAE52F0-BD5C-4C21-AD0E-41D312B5E2B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AAE52F0-BD5C-4C21-AD0E-41D312B5E2B4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

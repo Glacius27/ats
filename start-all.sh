@@ -6,6 +6,9 @@ SERVICES=(
   "ats-vacancy-service"
   "ats-recruitment-service"
   "ats-interview-service"
+  "ats-authorization-service"
+  "rabbitmq"
+  "keycloak"
 )
 
 for service in "${SERVICES[@]}"; do
