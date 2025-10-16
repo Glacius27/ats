@@ -22,7 +22,12 @@
         </PackageReference>
         <PackageReference Include="Minio" Version="6.0.2" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.*" />
+        <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ats-shared-contracts\ats-shared-contracts.csproj" />
     </ItemGroup>
 
 </Project>

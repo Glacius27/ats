@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-interview-service", "at
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-authorization-service", "ats-authorization-service\ats-authorization-service.csproj", "{7AAE52F0-BD5C-4C21-AD0E-41D312B5E2B4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ats-shared-contracts", "ats-shared-contracts\ats-shared-contracts.csproj", "{A495FE63-A3F9-40A0-AC68-AE4BD6E81160}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,5 +40,9 @@ Global
 		{7AAE52F0-BD5C-4C21-AD0E-41D312B5E2B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AAE52F0-BD5C-4C21-AD0E-41D312B5E2B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7AAE52F0-BD5C-4C21-AD0E-41D312B5E2B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A495FE63-A3F9-40A0-AC68-AE4BD6E81160}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A495FE63-A3F9-40A0-AC68-AE4BD6E81160}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A495FE63-A3F9-40A0-AC68-AE4BD6E81160}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A495FE63-A3F9-40A0-AC68-AE4BD6E81160}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

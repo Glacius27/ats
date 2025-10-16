@@ -1,5 +1,6 @@
 using ats;
 using CandidateService.Data;
+using CandidateService.Services;
 using Microsoft.EntityFrameworkCore;
 using Minio;
 
@@ -16,6 +17,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient<UserCache>();
+
+builder.Services.Configure<RabbitMqOptions>(
+    builder.Configuration.GetSection("RabbitMq"));
+
 builder.Services.AddSingleton<IMinioClient>(sp =>
 {
     var config = builder.Configuration.GetSection("MinioSettings");
@@ -24,6 +31,10 @@ builder.Services.AddSingleton<IMinioClient>(sp =>
         .WithCredentials(config["AccessKey"], config["SecretKey"])
         .Build();
 });
+
+builder.Services.AddSingleton<UserCache>();
+builder.Services.AddHostedService<RabbitMqListener>();
+builder.Services.AddHostedService<UserSnapshotLoader>();
 
 builder.Services.AddSingleton<ResumeStorageService>();
 
@@ -46,3 +57,4 @@ app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();
+
