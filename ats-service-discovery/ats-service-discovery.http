@@ -1,0 +1,6 @@
+@ats_service_discovery_HostAddress = http://localhost:5137
+
+GET {{ats_service_discovery_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
