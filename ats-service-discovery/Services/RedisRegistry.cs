@@ -1,26 +1,35 @@
 using ServiceDiscovery.Models;
 using StackExchange.Redis;
 using System.Text.Json;
-using Microsoft.AspNetCore.Hosting.Server;
-using IServer = StackExchange.Redis.IServer;
 
 namespace ServiceDiscovery.Services;
 
 public class RedisRegistry
 {
     private readonly IDatabase _db;
-    private readonly TimeSpan _ttl = TimeSpan.FromSeconds(60); // время жизни регистрации
+    private readonly TimeSpan _ttl = TimeSpan.FromSeconds(60);
 
     public RedisRegistry(IConnectionMultiplexer redis)
     {
         _db = redis.GetDatabase();
     }
 
-    public async Task RegisterAsync(ServiceInstance instance)
+    public async Task<bool> RegisterAsync(ServiceInstance instance)
     {
-        var key = $"service:{instance.Name}:{Guid.NewGuid()}";
+        // Валидируем имя
+        if (string.IsNullOrWhiteSpace(instance.Name))
+            throw new ArgumentException("Service name cannot be empty");
+
+        var key = $"service:{instance.Name}:{instance.Host}:{instance.Port}";
         var value = JsonSerializer.Serialize(instance);
+
+        var exists = await _db.KeyExistsAsync(key);
+
+        // Обновляем или создаём запись с TTL
         await _db.StringSetAsync(key, value, _ttl);
+
+        // Вернём true, если запись новая
+        return !exists;
     }
 
     public async Task<IEnumerable<ServiceInstance>> GetAllAsync()
@@ -65,7 +74,6 @@ public class RedisRegistry
 
     private IServer GetServer()
     {
-        // используется для поиска ключей
         var endpoints = _db.Multiplexer.GetEndPoints();
         return _db.Multiplexer.GetServer(endpoints.First());
     }

@@ -1,6 +1,7 @@
 using InterviewService.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using Ats.ServiceDiscovery.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +17,7 @@ builder.Services
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddServiceDiscovery(builder.Configuration);
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

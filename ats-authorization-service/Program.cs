@@ -1,8 +1,10 @@
+using Ats.ServiceDiscovery.Client;
 using AuthorizationService.Data;
 using AuthorizationService.Messaging;
 using AuthorizationService.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +39,7 @@ builder.Services.AddSingleton(sp =>
     return new KeycloakAdminClient(http, opt);
 });
 
+builder.Services.AddServiceDiscovery(builder.Configuration);
 
 var app = builder.Build();
 

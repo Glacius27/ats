@@ -1,29 +1,33 @@
+using ats_service_discovery.Models;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
 using ServiceDiscovery.Models;
 using ServiceDiscovery.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Загружаем параметры Redis из appsettings.json
-var redisConfig = builder.Configuration.GetSection("Redis");
-var host = redisConfig.GetValue<string>("Host");
-var port = redisConfig.GetValue<int>("Port");
-var password = redisConfig.GetValue<string>("Password");
-var db = redisConfig.GetValue<int>("DefaultDb");
+// Redis config
+var redisSection = builder.Configuration.GetSection("Redis");
+var redisHost = redisSection.GetValue<string>("Host")!;
+var redisPort = redisSection.GetValue<int>("Port");
+var redisPassword = redisSection.GetValue<string>("Password");
+var redisDb = redisSection.GetValue<int>("DefaultDb");
 
-// Формируем строку подключения
-var redisConnectionString = string.IsNullOrEmpty(password)
-    ? $"{host}:{port},defaultDatabase={db}"
-    : $"{host}:{port},password={password},defaultDatabase={db}";
+var redisConnStr = string.IsNullOrEmpty(redisPassword)
+    ? $"{redisHost}:{redisPort},defaultDatabase={redisDb}"
+    : $"{redisHost}:{redisPort},password={redisPassword},defaultDatabase={redisDb}";
 
-// Регистрируем Redis и наш Registry
-builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
-    ConnectionMultiplexer.Connect(redisConnectionString));
+// DI
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnStr));
 builder.Services.AddSingleton<RedisRegistry>();
+
+// ✅ Регистрируем опции RabbitMQ и сам паблишер правильно (через IOptions)
+builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection("RabbitMQ"));
+builder.Services.AddSingleton<RabbitMqPublisher>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -35,12 +39,39 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// Эндпоинты
-app.MapPost("/register", async (ServiceInstance instance, RedisRegistry registry) =>
+// Endpoints
+app.MapPost("/register", async (ServiceInstance instance, RedisRegistry registry, RabbitMqPublisher publisher) =>
 {
-    await registry.RegisterAsync(instance);
-    return Results.Ok(new { status = "registered", expiresIn = 60 });
+    try
+    {
+        var isNew = await registry.RegisterAsync(instance);
+
+        if (isNew)
+        {
+            var evt = new ServiceEvent
+            {
+                Event = "register",
+                Service = instance.Name,
+                Host = instance.Host,
+                Port = instance.Port
+            };
+
+            await publisher.PublishAsync(evt);
+        }
+
+        return Results.Ok(new
+        {
+            status = isNew ? "newly_registered" : "heartbeat_refreshed",
+            key = $"service:{instance.Name}:{instance.Host}:{instance.Port}",
+            expiresIn = 60
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { error = ex.Message });
+    }
 });
+
 
 app.MapGet("/services", async (RedisRegistry registry) =>
 {

@@ -28,6 +28,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ats-shared-contracts\ats-shared-contracts.csproj" />
+      <ProjectReference Include="..\ats.ServiceDiscovery.Client\ats.ServiceDiscovery.Client.csproj" />
     </ItemGroup>
 
 </Project>

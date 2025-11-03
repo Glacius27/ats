@@ -3,6 +3,7 @@ using CandidateService.Data;
 using CandidateService.Services;
 using Microsoft.EntityFrameworkCore;
 using Minio;
+using Ats.ServiceDiscovery.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +38,7 @@ builder.Services.AddHostedService<RabbitMqListener>();
 builder.Services.AddHostedService<UserSnapshotLoader>();
 
 builder.Services.AddSingleton<ResumeStorageService>();
-
+builder.Services.AddServiceDiscovery(builder.Configuration);
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
