@@ -16,7 +16,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ats.ServiceDiscovery.Client\ats.ServiceDiscovery.Client.csproj" />
+      <ProjectReference Include="..\ats.servicediscovery.library\ats.servicediscovery.library.csproj" />
     </ItemGroup>
 
 </Project>

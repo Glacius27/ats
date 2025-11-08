@@ -12,4 +12,5 @@ public class CreateUserRequest
 
     [Required, MinLength(6), MaxLength(128)]
     public string Password { get; set; } = null!;
+    public string Role { get; set; } = null!;
 }

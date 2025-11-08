@@ -1,6 +1,6 @@
+using Ats.Messaging.Abstractions;
 using AuthorizationService.Data;
 using AuthorizationService.DTO;
-using AuthorizationService.Messaging;
 using AuthorizationService.Models;
 using AuthorizationService.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -14,23 +14,23 @@ public class UsersController : ControllerBase
 {
     private readonly AuthDbContext _db;
     private readonly KeycloakAdminClient _keycloak;
-    private readonly RabbitMqPublisher _bus;
+    private readonly IEventPublisher _publisher;
 
-    public UsersController(AuthDbContext db, KeycloakAdminClient keycloak, RabbitMqPublisher bus)
+    public UsersController(AuthDbContext db, KeycloakAdminClient keycloak, IEventPublisher publisher)
     {
         _db = db;
         _keycloak = keycloak;
-        _bus = bus;
+        _publisher = publisher;
     }
 
     [HttpPost]
     public async Task<ActionResult<UserResponse>> CreateUser([FromBody] CreateUserRequest req, CancellationToken ct)
     {
-        // 1) Создаём пользователя в Keycloak
+        //  Создаём пользователя в Keycloak
         var kcUserId = await _keycloak.CreateUserAsync(req.Username, req.Email, ct);
         await _keycloak.SetPasswordAsync(kcUserId, req.Password, ct);
 
-        // 2) Создаём пользователя в БД
+        // Создаём пользователя в БД
         var user = new User
         {
             Username = req.Username,
@@ -41,16 +41,37 @@ public class UsersController : ControllerBase
 
         _db.Users.Add(user);
         await _db.SaveChangesAsync(ct);
+        
+        if (!string.IsNullOrWhiteSpace(req.Role))
+        {
+            var role = await _db.Roles.FirstOrDefaultAsync(r => r.Name == req.Role, ct);
+            if (role != null)
+            {
+                _db.UserRoles.Add(new UserRole
+                {
+                    UserId = user.Id,
+                    RoleId = role.Id
+                });
+                await _db.SaveChangesAsync(ct);
+            }
+        }
+        var roles = await _db.UserRoles
+            .Include(ur => ur.Role)
+            .Where(ur => ur.UserId == user.Id)
+            .Select(ur => ur.Role.Name)
+            .ToListAsync(ct);
 
-        // 3) Публикуем событие
-        await _bus.PublishAsync("auth.user.created", new
+        await _publisher.PublishAsync(new
         {
             userId = user.Id,
             keycloakUserId = kcUserId,
             username = user.Username,
             email = user.Email,
+            Roles = user.Roles.Select(r => r.Role.Name),
+            //roles = roles,
             createdAt = user.CreatedAt
-        });
+        }, routingKey: "user.created");
+        
 
         return CreatedAtAction(nameof(GetById), new { id = user.Id }, new UserResponse
         {
@@ -59,7 +80,7 @@ public class UsersController : ControllerBase
             Email = user.Email,
             KeycloakUserId = user.KeycloakUserId,
             IsActive = user.IsActive,
-            Roles = Enumerable.Empty<string>()
+            Roles = roles
         });
     }
 
@@ -68,6 +89,7 @@ public class UsersController : ControllerBase
     {
         var user = await _db.Users
             .Include(u => u.Roles)
+            .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Id == id, ct);
 
         if (user == null) return NotFound();
@@ -79,7 +101,7 @@ public class UsersController : ControllerBase
             Email = user.Email,
             KeycloakUserId = user.KeycloakUserId,
             IsActive = user.IsActive,
-            Roles = user.Roles.Select(r => r.Name)
+            Roles = user.Roles.Select(r => r.Role.Name)
         };
     }
 
@@ -88,6 +110,7 @@ public class UsersController : ControllerBase
     {
         var users = await _db.Users
             .Include(u => u.Roles)
+            .ThenInclude(ur => ur.Role)
             .ToListAsync(ct);
 
         return users.Select(user => new UserResponse
@@ -97,7 +120,10 @@ public class UsersController : ControllerBase
             Email = user.Email,
             KeycloakUserId = user.KeycloakUserId,
             IsActive = user.IsActive,
-            Roles = user.Roles.Select(r => r.Name)
+            //Roles = user.Roles.Select(r => r.Role.Name)
+            Roles = user.Roles
+                .Where(ur => ur.Role != null)  
+                .Select(ur => ur.Role!.Name)  
         });
     }
 
@@ -110,11 +136,11 @@ public class UsersController : ControllerBase
         user.IsActive = false;
         await _db.SaveChangesAsync(ct);
 
-        await _bus.PublishAsync("auth.user.deactivated", new
+        await _publisher.PublishAsync(new
         {
             userId = user.Id,
             deactivatedAt = DateTime.UtcNow
-        });
+        }, routingKey: "user.deactivated");
 
         await _keycloak.DeleteUserAsync(user.KeycloakUserId);
         return NoContent();
@@ -123,7 +149,7 @@ public class UsersController : ControllerBase
     [HttpGet("snapshot")]
     public async Task<IActionResult> GetSnapshot([FromQuery] DateTime? since = null, CancellationToken ct = default)
     {
-        IQueryable<User> query = _db.Users.Include(u => u.Roles);
+        IQueryable<User> query = _db.Users.Include(u => u.Roles).ThenInclude(ur => ur.Role);
 
         if (since.HasValue)
             query = query.Where(u => u.LastUpdatedAt > since.Value);
@@ -137,8 +163,35 @@ public class UsersController : ControllerBase
             u.Email,
             u.KeycloakUserId,
             u.IsActive,
-            Roles = u.Roles.Select(r => r.Name),
+            Roles = u.Roles.Select(r => r.Role.Name),
             u.LastUpdatedAt
         }));
+    }
+    
+    [HttpPost("publish-list")]
+    public async Task<IActionResult> PublishUsersList(CancellationToken ct)
+    {
+        var users = await _db.Users
+            .Include(u => u.Roles)
+            .ThenInclude(ur => ur.Role)
+            .Select(u => new UserDto(
+                u.Id,
+                u.Username,
+                u.Email,
+                u.Roles.Select(ur => ur.Role.Name).ToList()
+            ))
+            .ToListAsync(ct);
+
+        var evt = new UsersListEvent { Users = users };
+
+        await _publisher.PublishAsync(evt, routingKey: "users.list"); 
+
+        return Ok(new { published = users.Count });
+    }
+    public record UserDto(Guid Id, string Username, string Email, List<string> Roles);
+
+    public class UsersListEvent
+    {
+        public List<UserDto> Users { get; set; } = new();
     }
 }

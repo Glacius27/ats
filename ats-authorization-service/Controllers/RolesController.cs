@@ -1,6 +1,6 @@
+using Ats.Messaging.Abstractions;
 using AuthorizationService.Data;
 using AuthorizationService.DTO;
-using AuthorizationService.Messaging;
 using AuthorizationService.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,12 +12,12 @@ namespace AuthorizationService.Controllers;
 public class RolesController : ControllerBase
 {
     private readonly AuthDbContext _db;
-    private readonly RabbitMqPublisher _bus;
+    private readonly IEventPublisher _publisher;
 
-    public RolesController(AuthDbContext db, RabbitMqPublisher bus)
+    public RolesController(AuthDbContext db, IEventPublisher publisher)
     {
         _db = db;
-        _bus = bus;
+        _publisher = publisher;
     }
 
     [HttpGet]
@@ -40,44 +40,49 @@ public class RolesController : ControllerBase
         var role = await _db.Roles.FirstOrDefaultAsync(r => r.Name == req.RoleName, ct);
         if (role == null) return NotFound("Role not found");
 
-        if (user.Roles.Any(r => r.Id == role.Id))
+        if (user.Roles.Any(r => r.RoleId == role.Id))
             return Conflict("Role already assigned");
+        
+        var userRole = new UserRole
+        {
+            UserId = user.Id,
+            RoleId = role.Id
+        };
 
-        user.Roles.Add(role);
+        _db.UserRoles.Add(userRole);
         await _db.SaveChangesAsync(ct);
 
-        await _bus.PublishAsync("auth.role.assigned", new
+        await _publisher.PublishAsync(new
         {
             userId,
             role = role.Name,
             assignedAt = DateTime.UtcNow
-        });
+        }, routingKey: "role.assigned");
 
-        return NoContent();
+        return Ok(new { message = $"Role '{role.Name}' assigned to {user.Username}" });
     }
 
     [HttpPost("{userId:guid}/revoke")]
     public async Task<IActionResult> Revoke(Guid userId, [FromBody] RevokeRoleRequest req, CancellationToken ct)
     {
-        var user = await _db.Users
-            .Include(u => u.Roles)
-            .FirstOrDefaultAsync(u => u.Id == userId, ct);
-        if (user == null) return NotFound("User not found");
+        var userRole = await _db.UserRoles
+            .Include(ur => ur.Role)
+            .FirstOrDefaultAsync(ur => ur.UserId == userId && ur.Role.Name == req.Role, ct);
 
-        var role = user.Roles.FirstOrDefault(r => r.Name == req.RoleName);
-        if (role == null) return NotFound("Role not assigned");
+        if (userRole == null)
+            return NotFound($"User does not have role '{req.Role}'.");
 
-        user.Roles.Remove(role);
+        _db.UserRoles.Remove(userRole);
         await _db.SaveChangesAsync(ct);
 
-        await _bus.PublishAsync("auth.role.revoked", new
+        await _publisher.PublishAsync(new
         {
-            userId,
-            role = role.Name,
+            userId = userId,
+            role = req.Role,
             revokedAt = DateTime.UtcNow
-        });
+        }, routingKey: "role.revoked");
 
-        return NoContent();
+        return Ok(new { message = $"Role '{req.Role}' revoked." });
     }
 
     [HttpGet("{userId:guid}")]
@@ -85,10 +90,11 @@ public class RolesController : ControllerBase
     {
         var user = await _db.Users
             .Include(u => u.Roles)
+            .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Id == userId, ct);
 
         if (user == null) return Array.Empty<string>();
 
-        return user.Roles.Select(r => r.Name);
+        return user.Roles.Select(ur => ur.Role.Name);
     }
 }

@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using AuthorizationService.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuthorizationService.Data
 {
@@ -9,42 +9,45 @@ namespace AuthorizationService.Data
 
         public DbSet<User> Users => Set<User>();
         public DbSet<Role> Roles => Set<Role>();
+        public DbSet<UserRole> UserRoles => Set<UserRole>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // связь многие-ко-многим через EF Core автоматом
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Roles)
+            // Конфигурация связи "многие ко многим" между User и Role через UserRole
+            modelBuilder.Entity<UserRole>()
+                .HasKey(ur => new { ur.UserId, ur.RoleId });
+
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.User)
+                .WithMany(u => u.Roles)
+                .HasForeignKey(ur => ur.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserRole>()
+                .HasOne(ur => ur.Role)
                 .WithMany(r => r.Users)
-                .UsingEntity(j => j.ToTable("UserRoles")); // имя промежуточной таблицы
+                .HasForeignKey(ur => ur.RoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
 
-            // уникальные ограничения
-            modelBuilder.Entity<User>()
-                .HasIndex(u => u.Username)
-                .IsUnique();
+            // Дополнительно можно явно указать типы ключей, если в базе была путаница
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.Property(e => e.Id).HasColumnType("uuid");
+            });
 
-            modelBuilder.Entity<Role>()
-                .HasIndex(r => r.Name)
-                .IsUnique();
-            modelBuilder.Entity<Role>().HasData(
-                new Role
-                {
-                    Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                    Name = "admin",
-                },
-                new Role
-                {
-                    Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                    Name = "recruiter",
-                },
-                new Role
-                {
-                    Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-                    Name = "manager",
-                }
-            );
+            modelBuilder.Entity<Role>(entity =>
+            {
+                entity.Property(e => e.Id).HasColumnType("uuid");
+            });
+
+            modelBuilder.Entity<UserRole>(entity =>
+            {
+                entity.Property(e => e.UserId).HasColumnType("uuid");
+                entity.Property(e => e.RoleId).HasColumnType("uuid");
+            });
         }
     }
 }

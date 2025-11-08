@@ -9,6 +9,6 @@ namespace AuthorizationService.Models
         public string Name { get; set; } = default!;
 
         // обратная связь с пользователями
-        public ICollection<User> Users { get; set; } = new List<User>();
+        public ICollection<UserRole> Users { get; set; } = new List<UserRole>();
     }
 }

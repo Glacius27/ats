@@ -1,47 +1,36 @@
-using Ats.ServiceDiscovery.Client;
 using AuthorizationService.Data;
-using AuthorizationService.Messaging;
 using AuthorizationService.Services;
+using Ats.Messaging;
+using Ats.Messaging.Extensions;
+using Ats.Messaging.Options;
+using Ats.ServiceDiscovery.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-
 var builder = WebApplication.CreateBuilder(args);
-
-// ───────────────────────────────
-// 📦 Controllers + Swagger
-// ───────────────────────────────
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
 
-builder.Services.Configure<RabbitMqOptions>(
+builder.Services.Configure<MessagingOptions>(
     builder.Configuration.GetSection("RabbitMq"));
-
-builder.Services.AddSingleton<RabbitMqPublisher>();
-
+builder.Services.AddMessaging(); // <-- инфраструктура messaging
+builder.Services.AddServiceDiscovery(builder.Configuration);
 
 builder.Services.Configure<KeycloakOptions>(
     builder.Configuration.GetSection("Keycloak"));
-
-
 builder.Services.AddHttpClient<KeycloakAdminClient>();
+builder.Services.AddScoped<KeycloakAdminClient>();
 
-builder.Services.AddSingleton(sp =>
-{
-    var opt = sp.GetRequiredService<IOptions<KeycloakOptions>>().Value;
-    var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(KeycloakAdminClient));
-    return new KeycloakAdminClient(http, opt);
-});
 
-builder.Services.AddServiceDiscovery(builder.Configuration);
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
 
 if (app.Environment.IsDevelopment())
 {
@@ -49,10 +38,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
+await app.UseMessagingAsync();
+
+
 app.UseAuthorization();
 app.MapControllers();
-
-Console.WriteLine("✅ Authorization Service started successfully.");
-Console.WriteLine($"➡️  Environment: {app.Environment.EnvironmentName}");
 
 app.Run();

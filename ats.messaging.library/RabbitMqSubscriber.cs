@@ -1,10 +1,12 @@
 using System;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Ats.Messaging.Abstractions;
 using Ats.Messaging.Internal;
 using Ats.Messaging.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
@@ -93,6 +95,59 @@ public sealed class RabbitMqSubscriber : IEventSubscriber
         _logger?.LogInformation("Subscribed: queue={Queue} ex={Exchange} rk={RoutingKey} type={Type}",
             queueName, ex, rk, typeof(TEvent).Name);
     }
+    
+    public async Task RegisterSubscribersAsync(IServiceProvider serviceProvider)
+{
+    await EnsureAsync(); // убедимся, что соединение и канал есть
+
+    var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+    var subscriberTypes = assemblies
+        .SelectMany(a => a.GetTypes())
+        .Where(t => typeof(IEventSubscriber).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
+
+    foreach (var subscriberType in subscriberTypes)
+    {
+        var instance = (IEventSubscriber)ActivatorUtilities.CreateInstance(serviceProvider, subscriberType);
+
+        var methods = subscriberType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Where(m => m.GetCustomAttributes(typeof(TopicAttribute), false).Any());
+
+        foreach (var method in methods)
+        {
+            var topicAttr = (TopicAttribute)method.GetCustomAttributes(typeof(TopicAttribute), false).First();
+            var parameterType = method.GetParameters().FirstOrDefault()?.ParameterType;
+            if (parameterType == null)
+            {
+                _logger?.LogWarning("Skipping {Method}: no parameter type found.", method.Name);
+                continue;
+            }
+
+            var routingKey = topicAttr.Name;
+            var queueName = $"{_opt.Exchange}.{routingKey}.{subscriberType.Name}".ToLower();
+
+            _logger?.LogInformation("Auto-subscribing {Subscriber}.{Method} to {RoutingKey}", subscriberType.Name, method.Name, routingKey);
+
+            // создаем типизированный handler динамически
+            var subscribeMethod = typeof(RabbitMqSubscriber)
+                .GetMethod(nameof(Subscribe), BindingFlags.Public | BindingFlags.Instance)!
+                .MakeGenericMethod(parameterType);
+
+            // создаём делегат для вызова метода подписчика
+            var handlerDelegate = CreateHandlerDelegate(instance, method, parameterType);
+
+            // вызываем Subscribe<T>(queueName, handler, routingKey)
+            subscribeMethod.Invoke(this, new object?[] { queueName, handlerDelegate, routingKey, _opt.Exchange });
+        }
+    }
+}
+
+private static object CreateHandlerDelegate(object instance, MethodInfo method, Type parameterType)
+{
+    // Формируем Func<T, Task> с рефлексией
+    var handlerType = typeof(Func<,>).MakeGenericType(parameterType, typeof(Task));
+
+    return Delegate.CreateDelegate(handlerType, instance, method);
+}
 
     public async ValueTask DisposeAsync()
     {

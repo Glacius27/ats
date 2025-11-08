@@ -5,5 +5,5 @@ namespace AuthorizationService.DTO;
 public class RevokeRoleRequest
 {
     [Required, MaxLength(100)]
-    public string RoleName { get; set; } = null!;
+    public string Role { get; set; } = null!;
 }

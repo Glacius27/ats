@@ -55,7 +55,7 @@ public sealed class RabbitMqPublisher : IEventPublisher, IAsyncDisposable
         {
             ContentType = "application/json",
             DeliveryMode = DeliveryModes.Persistent,
-            Type = typeof(TEvent).FullName,
+            Type = typeof(TEvent).Name,
             CorrelationId = correlationId
         };
 
