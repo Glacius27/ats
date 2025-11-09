@@ -73,7 +73,7 @@ public class UsersController : ControllerBase
             isActive = user.IsActive,
             roles = roles
         }, ct);
-        _logger.LogInformation("neww user message published to RabbitMQ");
+        _logger.LogInformation("new user message published to RabbitMQ");
 
         return CreatedAtAction(nameof(GetById), new { id = user.Id }, new UserResponse
         {

@@ -1,4 +1,7 @@
+using Ats.CandidateService.Users;
 using Ats.Integration;
+using Ats.Integration.Messaging;
+using Ats.Integration.Users;
 using Ats.ServiceDiscovery.Client;
 using CandidateService.Data;
 using CandidateService.Services;
@@ -18,12 +21,12 @@ builder.Services.AddSwaggerGen();
 
 
 builder.Services.AddAtsIntegration(builder.Configuration);
-builder.Services.AddUserEvents();
-builder.Services.AddUserSnapshot(); 
+builder.Services.AddSingleton<UserCacheHandler>();
+builder.Services.AddSingleton<IUserCacheHandler>(sp => sp.GetRequiredService<UserCacheHandler>());
+//builder.Services.AddUserSnapshotHostedLoader<UserCacheHandler>(); 
+builder.Services.AddUserEvents();       
 
 
-builder.Services.AddSingleton<UserCache>();
-builder.Services.AddSingleton<IUserCacheHandler, CandidateUserCache>();
 
 
 builder.Services.AddServiceDiscovery(builder.Configuration);
@@ -53,23 +56,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-
-await app.UseAtsIntegrationAsync();
-
-
-using (var scope = app.Services.CreateScope())
-{
-    scope.ServiceProvider.RegisterUserEventSubscriptions();
-}
-
-
-using (var scope = app.Services.CreateScope())
-{
-    var loader = scope.ServiceProvider.GetRequiredService<UserSnapshotLoader>();
-    await loader.LoadSnapshotAsync(); 
-}
-
 
 app.UseHttpsRedirection();
 app.MapControllers();

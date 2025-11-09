@@ -1,5 +1,6 @@
 
 using Ats.Integration;
+using Ats.Integration.Messaging;
 using AuthorizationService.Data;
 using AuthorizationService.Services;
 using Ats.ServiceDiscovery.Client;
@@ -35,7 +36,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-await app.UseAtsIntegrationAsync();
+//await app.UseAtsIntegrationAsync();
 app.UseAuthorization();
 app.MapControllers();
 
