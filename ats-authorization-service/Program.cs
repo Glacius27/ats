@@ -1,8 +1,7 @@
+
+using Ats.Integration;
 using AuthorizationService.Data;
 using AuthorizationService.Services;
-using Ats.Messaging;
-using Ats.Messaging.Extensions;
-using Ats.Messaging.Options;
 using Ats.ServiceDiscovery.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -14,11 +13,9 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
 
 
-builder.Services.Configure<MessagingOptions>(
-    builder.Configuration.GetSection("RabbitMq"));
-builder.Services.AddMessaging(); // <-- инфраструктура messaging
-builder.Services.AddServiceDiscovery(builder.Configuration);
 
+builder.Services.AddServiceDiscovery(builder.Configuration);
+builder.Services.AddAtsIntegration(builder.Configuration);
 builder.Services.Configure<KeycloakOptions>(
     builder.Configuration.GetSection("Keycloak"));
 builder.Services.AddHttpClient<KeycloakAdminClient>();
@@ -38,10 +35,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
-await app.UseMessagingAsync();
-
-
+await app.UseAtsIntegrationAsync();
 app.UseAuthorization();
 app.MapControllers();
 

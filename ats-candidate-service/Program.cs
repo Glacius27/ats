@@ -1,10 +1,7 @@
-using Ats.Messaging;
-using Ats.Messaging.Extensions;
-using Ats.Messaging.Options;
-using Ats.Users.Extensions;
-using Ats.Users.Services;
+using Ats.Integration;
 using Ats.ServiceDiscovery.Client;
 using CandidateService.Data;
+using CandidateService.Services;
 using Microsoft.EntityFrameworkCore;
 using Minio;
 
@@ -20,12 +17,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-builder.Services.Configure<MessagingOptions>(
-    builder.Configuration.GetSection("RabbitMq"));
-builder.Services.AddMessaging();
+builder.Services.AddAtsIntegration(builder.Configuration);
+builder.Services.AddUserEvents();
+builder.Services.AddUserSnapshot(); 
 
 
-builder.Services.AddUserIntegration();
+builder.Services.AddSingleton<UserCache>();
+builder.Services.AddSingleton<IUserCacheHandler, CandidateUserCache>();
+
+
+builder.Services.AddServiceDiscovery(builder.Configuration);
 
 
 builder.Services.AddSingleton<IMinioClient>(sp =>
@@ -36,9 +37,6 @@ builder.Services.AddSingleton<IMinioClient>(sp =>
         .WithCredentials(config["AccessKey"], config["SecretKey"])
         .Build();
 });
-
-builder.Services.AddServiceDiscovery(builder.Configuration);
-builder.Services.AddUserIntegration();
 
 var app = builder.Build();
 
@@ -57,15 +55,23 @@ if (app.Environment.IsDevelopment())
 }
 
 
-await app.UseMessagingAsync();
+await app.UseAtsIntegrationAsync();
+
+
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.RegisterUserEventSubscriptions();
+}
 
 
 using (var scope = app.Services.CreateScope())
 {
     var loader = scope.ServiceProvider.GetRequiredService<UserSnapshotLoader>();
-    await loader.LoadSnapshotAsync();
+    await loader.LoadSnapshotAsync(); 
 }
+
 
 app.UseHttpsRedirection();
 app.MapControllers();
+
 app.Run();

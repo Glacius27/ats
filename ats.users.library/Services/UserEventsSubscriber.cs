@@ -39,4 +39,5 @@ public class UserEventsSubscriber : IEventSubscriber
         _logger.LogInformation("📩 Received user.deactivated for {UserId}", user.Id);
         return Task.CompletedTask;
     }
+
 }

@@ -1,4 +1,5 @@
-using Ats.Messaging.Abstractions;
+
+using Ats.Integration;
 using AuthorizationService.Data;
 using AuthorizationService.DTO;
 using AuthorizationService.Models;
@@ -14,13 +15,15 @@ public class UsersController : ControllerBase
 {
     private readonly AuthDbContext _db;
     private readonly KeycloakAdminClient _keycloak;
-    private readonly IEventPublisher _publisher;
+    private readonly IAtsBus _bus;
+    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(AuthDbContext db, KeycloakAdminClient keycloak, IEventPublisher publisher)
+    public UsersController(AuthDbContext db, KeycloakAdminClient keycloak, IAtsBus bus, ILogger<UsersController> logger)
     {
         _db = db;
         _keycloak = keycloak;
-        _publisher = publisher;
+        _bus = bus;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -60,18 +63,17 @@ public class UsersController : ControllerBase
             .Where(ur => ur.UserId == user.Id)
             .Select(ur => ur.Role.Name)
             .ToListAsync(ct);
-
-        await _publisher.PublishAsync(new
+        
+        _logger.LogInformation("🐇 Publishing user list update to RabbitMQ...");
+        await _bus.PublishAsync("user.created", new
         {
-            userId = user.Id,
-            keycloakUserId = kcUserId,
+            id = user.Id,
             username = user.Username,
             email = user.Email,
-            Roles = user.Roles.Select(r => r.Role.Name),
-            //roles = roles,
-            createdAt = user.CreatedAt
-        }, routingKey: "user.created");
-        
+            isActive = user.IsActive,
+            roles = roles
+        }, ct);
+        _logger.LogInformation("neww user message published to RabbitMQ");
 
         return CreatedAtAction(nameof(GetById), new { id = user.Id }, new UserResponse
         {
@@ -136,11 +138,7 @@ public class UsersController : ControllerBase
         user.IsActive = false;
         await _db.SaveChangesAsync(ct);
 
-        await _publisher.PublishAsync(new
-        {
-            userId = user.Id,
-            deactivatedAt = DateTime.UtcNow
-        }, routingKey: "user.deactivated");
+        await _bus.PublishAsync("user.deactivated", new { id = user.Id }, ct);
 
         await _keycloak.DeleteUserAsync(user.KeycloakUserId);
         return NoContent();
@@ -184,7 +182,7 @@ public class UsersController : ControllerBase
 
         var evt = new UsersListEvent { Users = users };
 
-        await _publisher.PublishAsync(evt, routingKey: "users.list"); 
+       await _bus.PublishAsync("users.list", new { users }, ct);
 
         return Ok(new { published = users.Count });
     }

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Ats.ServiceDiscovery.Client;
 
-public class ServiceDiscoveryClient : IDisposable
+public class ServiceDiscoveryClient : IDisposable, IServiceDiscoveryClient
 {
     private readonly HttpClient _http;
     private readonly ServiceDiscoveryOptions _opt;
@@ -100,6 +100,23 @@ public class ServiceDiscoveryClient : IDisposable
         _ = RegisterAsync();
         _heartbeatTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(_opt.HeartbeatIntervalSeconds));
         _refreshTimer.Change(TimeSpan.Zero, TimeSpan.FromSeconds(_opt.RefreshIntervalSeconds));
+    }
+    public async Task<IReadOnlyList<ServiceInstance>> GetServiceAsync(string name, CancellationToken ct = default)
+    {
+        
+        if (_cache.Count == 0)
+        {
+            await RefreshCacheAsync();
+        }
+
+        _cache.TryGetValue(name, out var list);
+        return list ?? new List<ServiceInstance>();
+    }
+
+    public async Task<ServiceInstance?> GetSingleServiceAsync(string name, CancellationToken ct = default)
+    {
+        var list = await GetServiceAsync(name, ct);
+        return list.FirstOrDefault();
     }
 
 }

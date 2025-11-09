@@ -8,10 +8,10 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddServiceDiscovery(this IServiceCollection services, IConfiguration config)
     {
-        var section = config.GetSection("ServiceDiscovery");
-        services.Configure<ServiceDiscoveryOptions>(section);
+        services.Configure<ServiceDiscoveryOptions>(config.GetSection("ServiceDiscovery"));
         services.AddSingleton<ServiceDiscoveryClient>();
-        services.AddHostedService<ServiceDiscoveryHostedService>(); 
+        services.AddSingleton<IServiceDiscoveryClient>(sp => sp.GetRequiredService<ServiceDiscoveryClient>());
+        services.AddHostedService<ServiceDiscoveryHostedService>();
         return services;
     }
 }

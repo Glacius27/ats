@@ -20,12 +20,12 @@
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
-        <PackageReference Include="RabbitMQ.Client" Version="7.1.2" />
+        <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ats.messaging.library\ats.messaging.library.csproj" />
+      <ProjectReference Include="..\ats.integration.library\ats.integration.library.csproj" />
       <ProjectReference Include="..\ats.servicediscovery.library\ats.servicediscovery.library.csproj" />
     </ItemGroup>
 

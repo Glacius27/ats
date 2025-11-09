@@ -5,5 +5,5 @@ namespace AuthorizationService.DTO;
 public class AssignRoleRequest
 {
     [Required, MaxLength(100)]
-    public string RoleName { get; set; } = null!;
+    public string Role { get; set; } = null!;
 }
