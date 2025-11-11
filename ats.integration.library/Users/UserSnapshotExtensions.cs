@@ -20,16 +20,61 @@ public static class UserSnapshotExtensions
     private sealed class UserSnapshotHostedService<THandler> : IHostedService where THandler : class, IUserCacheHandler
     {
         private readonly IServiceProvider _sp;
+        private readonly ILogger<UserSnapshotHostedService<THandler>> _logger;
+        private readonly UserSnapshotLoader _loader;
+        private readonly THandler _handler;
+
+        public UserSnapshotHostedService(IServiceProvider sp, ILogger<UserSnapshotHostedService<THandler>> logger)
+        {
+            _sp = sp;
+            _logger = logger;
+
+            using var scope = _sp.CreateScope();
+            _loader = scope.ServiceProvider.GetRequiredService<UserSnapshotLoader>();
+            _handler = scope.ServiceProvider.GetRequiredService<THandler>();
+        }
+
+   
         public UserSnapshotHostedService(IServiceProvider sp) => _sp = sp;
 
+        // public async Task StartAsync(CancellationToken cancellationToken)
+        // {
+        //     using var scope = _sp.CreateScope();
+        //     var loader = scope.ServiceProvider.GetRequiredService<UserSnapshotLoader>();
+        //     var handler = scope.ServiceProvider.GetRequiredService<THandler>();
+        //
+        //     var users = await loader.LoadSnapshotAsync(cancellationToken);
+        //     handler.ApplySnapshot(users);
+        // }
+        
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            using var scope = _sp.CreateScope();
-            var loader = scope.ServiceProvider.GetRequiredService<UserSnapshotLoader>();
-            var handler = scope.ServiceProvider.GetRequiredService<THandler>();
+            try
+            {
+                var attempts = 0;
+                while (attempts < 2 && !cancellationToken.IsCancellationRequested)
+                {
+                    attempts++;
+                    try
+                    {
+                        var users = await _loader.LoadSnapshotAsync(cancellationToken);
+                        _handler.ApplySnapshot(users);
+                        _logger.LogInformation("User snapshot applied: {Count} users", users.Count);
+                        return;
+                    }
+                    catch (HttpRequestException ex)
+                    {
+                        _logger.LogWarning(ex, "Snapshot attempt {Attempt} failed. Will retry shortly.", attempts);
+                        await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
+                    }
+                }
 
-            var users = await loader.LoadSnapshotAsync(cancellationToken);
-            handler.ApplySnapshot(users);
+                _logger.LogWarning("User snapshot not loaded; starting without snapshot (will rely on events).");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error while loading user snapshot. Service will continue without it.");
+            }
         }
 
         public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

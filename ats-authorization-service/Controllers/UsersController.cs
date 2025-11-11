@@ -1,5 +1,6 @@
 
 using Ats.Integration;
+using Ats.Integration.Contracts;
 using AuthorizationService.Data;
 using AuthorizationService.DTO;
 using AuthorizationService.Models;
@@ -65,13 +66,14 @@ public class UsersController : ControllerBase
             .ToListAsync(ct);
         
         _logger.LogInformation("🐇 Publishing user list update to RabbitMQ...");
-        await _bus.PublishAsync("user.created", new
+        
+        await _bus.PublishAsync("user.created", new AuthUser
         {
-            id = user.Id,
-            username = user.Username,
-            email = user.Email,
-            isActive = user.IsActive,
-            roles = roles
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            IsActive = user.IsActive,
+            Roles = roles ?? new List<string>()
         }, ct);
         _logger.LogInformation("new user message published to RabbitMQ");
 

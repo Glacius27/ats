@@ -12,17 +12,23 @@ public class UserCacheHandler : IUserCacheHandler
     {
         _cache.Clear();
         foreach (var u in users)
+        {
+            u.Roles ??= new List<string>();
             _cache[u.Id] = u;
+        }
     }
 
-    //public void OnUserCreated(AuthUser user) => _cache[user.Id] = user;
     public void OnUserCreated(AuthUser user)
     {
+        user.Roles ??= new List<string>();
         _cache[user.Id] = user;
-        Console.WriteLine($"[CACHE] Added user: {user.Username} ({user.Email})");
     }
 
-    public void OnUserUpdated(AuthUser user) => _cache[user.Id] = user;
+    public void OnUserUpdated(AuthUser user)
+    {
+        user.Roles ??= new List<string>();
+        _cache[user.Id] = user;
+    }
 
     public void OnUserDeactivated(AuthUser user)
     {
@@ -33,11 +39,12 @@ public class UserCacheHandler : IUserCacheHandler
         }
         else
         {
+            user.Roles ??= new List<string>();
+            user.IsActive = false;
             _cache[user.Id] = user;
         }
     }
 
-    public bool TryGet(Guid id, out AuthUser? user) => _cache.TryGetValue(id, out user);
-
+    public bool TryGet(Guid id, out AuthUser? u) => _cache.TryGetValue(id, out u);
     public IReadOnlyCollection<AuthUser> All() => _cache.Values.ToList();
 }
