@@ -8,7 +8,7 @@ SERVICES=(
   "ats-interview-service"
   "ats-authorization-service"
   "rabbitmq"
-  "keycloak"
+  "ats-keycloak"
   "ats-service-discovery"
 )
 

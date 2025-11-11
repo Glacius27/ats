@@ -1,0 +1,94 @@
+{
+  "realm": "ats",
+  "enabled": true,
+
+  "roles": {
+    "realm": [
+      { "name": "candidate" },
+      { "name": "recruiter" },
+      { "name": "manager" }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "ats-frontend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["*"]
+    },
+    {
+      "clientId": "ats-backend",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "ats-backend-secret",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": [],
+      "webOrigins": []
+    },
+    {
+      "clientId": "ats-admin",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "supersecret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false
+    }
+  ],
+
+  "users": [
+    {
+      "username": "candidate",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "123456", "temporary": false }
+      ],
+      "realmRoles": ["candidate"]
+    },
+    {
+      "username": "recruiter",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "123456", "temporary": false }
+      ],
+      "realmRoles": ["recruiter"]
+    },
+    {
+      "username": "manager",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        { "type": "password", "value": "123456", "temporary": false }
+      ],
+      "realmRoles": ["manager"]
+    },
+
+    {
+      "username": "service-account-ats-admin",
+      "enabled": true,
+      "serviceAccountClientId": "ats-admin",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users"
+        ]
+      }
+    }
+  ]
+}
