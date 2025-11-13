@@ -1,4 +1,4 @@
-using CandidateService.Services;
+using Ats.CandidateService.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CandidateService.Controllers;
@@ -17,7 +17,7 @@ public class Debugcontroller : ControllerBase
     [HttpGet]
     public IActionResult GetAll()
     {
-        var users = _cache.Users.ToList();
+        var users = _cache.All;
         return Ok(users);
     }
 }

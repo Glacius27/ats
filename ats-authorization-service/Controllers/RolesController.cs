@@ -1,4 +1,5 @@
 using Ats.Integration;
+using Ats.Integration.Contracts;
 using AuthorizationService.Data;
 using AuthorizationService.Models;
 using AuthorizationService.DTO;           // если тут лежат AssignRoleRequest / RevokeRoleRequest
@@ -70,19 +71,24 @@ public class RolesController : ControllerBase
             .Select(ur => ur.Role!.Name)
             .ToListAsync(ct);
 
-        await _bus.PublishAsync("user.updated", new
+        //await _bus.PublishAsync("user.updated", user, ct);
+        
+        var authUser = new AuthUser
         {
-            id = user.Id,
-            username = user.Username,
-            email = user.Email,
-            isActive = user.IsActive,
-            roles
-        }, ct);
+            Id       = user.Id,
+            Username = user.Username,
+            Email    = user.Email,
+            IsActive = user.IsActive,
+            Roles    = user.Roles
+                .Select(ur => ur.Role!.Name)
+                .ToList()
+        };
+
+        await _bus.PublishAsync("user.updated", authUser, ct);
 
         return Ok(new { message = $"Role '{req.Role}' assigned.", roles });
     }
 
-    // POST: api/roles/{userId}/revoke
     [HttpPost("{userId:guid}/revoke")]
     public async Task<IActionResult> Revoke(Guid userId, [FromBody] RevokeRoleRequest req, CancellationToken ct)
     {
@@ -91,14 +97,20 @@ public class RolesController : ControllerBase
 
         var user = await _db.Users
             .Include(u => u.Roles)
+            .ThenInclude(ur => ur.Role)
             .FirstOrDefaultAsync(u => u.Id == userId, ct);
-        if (user is null) return NotFound($"User {userId} not found.");
 
-        var role = await _db.Roles.FirstOrDefaultAsync(r => r.Name == req.Role, ct);
-        if (role is null) return NotFound($"Role '{req.Role}' not found.");
+        if (user is null) 
+            return NotFound($"User {userId} not found.");
 
-        var link = await _db.UserRoles.FirstOrDefaultAsync(
-            ur => ur.UserId == user.Id && ur.RoleId == role.Id, ct);
+        var role = await _db.Roles
+            .FirstOrDefaultAsync(r => r.Name == req.Role, ct);
+
+        if (role is null) 
+            return NotFound($"Role '{req.Role}' not found.");
+
+        var link = await _db.UserRoles
+            .FirstOrDefaultAsync(ur => ur.UserId == user.Id && ur.RoleId == role.Id, ct);
 
         if (link is null)
             return NotFound($"User doesn't have role '{req.Role}'.");
@@ -106,22 +118,29 @@ public class RolesController : ControllerBase
         _db.UserRoles.Remove(link);
         await _db.SaveChangesAsync(ct);
 
-        // публикация полного снимка user.updated
-        var roles = await _db.UserRoles
-            .Where(ur => ur.UserId == user.Id)
+
+        await _db.Entry(user).ReloadAsync(ct);
+
+        await _db.Entry(user)
+            .Collection(u => u.Roles)
+            .Query()
             .Include(ur => ur.Role)
-            .Select(ur => ur.Role!.Name)
-            .ToListAsync(ct);
+            .LoadAsync(ct);
 
-        await _bus.PublishAsync("user.updated", new
+        var authUser = new AuthUser
         {
-            id = user.Id,
-            username = user.Username,
-            email = user.Email,
-            isActive = user.IsActive,
-            roles
-        }, ct);
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            IsActive = user.IsActive,
+            Roles = user.Roles
+                .Where(ur => ur.Role != null)
+                .Select(ur => ur.Role!.Name)
+                .ToList()
+        };
 
-        return Ok(new { message = $"Role '{req.Role}' revoked.", roles });
+        await _bus.PublishAsync("user.updated", authUser, ct);
+
+        return Ok(new { message = $"Role '{req.Role}' revoked." });
     }
 }

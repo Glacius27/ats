@@ -4,7 +4,6 @@ using Ats.Integration.Messaging;
 using Ats.Integration.Users;
 using Ats.ServiceDiscovery.Client;
 using CandidateService.Data;
-using CandidateService.Services;
 using Microsoft.EntityFrameworkCore;
 using Minio;
 
@@ -45,11 +44,6 @@ using (var tempProvider = builder.Services.BuildServiceProvider())
 
 builder.Services.AddUserSnapshotHostedLoader<UserCacheHandler>(); 
 builder.Services.AddUserEvents();       
-
-
-
-
-
 
 
 builder.Services.AddSingleton<IMinioClient>(sp =>

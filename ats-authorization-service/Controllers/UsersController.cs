@@ -30,11 +30,11 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<UserResponse>> CreateUser([FromBody] CreateUserRequest req, CancellationToken ct)
     {
-        //  Создаём пользователя в Keycloak
+      
         var kcUserId = await _keycloak.CreateUserAsync(req.Username, req.Email, ct);
         await _keycloak.SetPasswordAsync(kcUserId, req.Password, ct);
 
-        // Создаём пользователя в БД
+       
         var user = new User
         {
             Username = req.Username,
@@ -124,7 +124,6 @@ public class UsersController : ControllerBase
             Email = user.Email,
             KeycloakUserId = user.KeycloakUserId,
             IsActive = user.IsActive,
-            //Roles = user.Roles.Select(r => r.Role.Name)
             Roles = user.Roles
                 .Where(ur => ur.Role != null)  
                 .Select(ur => ur.Role!.Name)  
@@ -140,10 +139,11 @@ public class UsersController : ControllerBase
         user.IsActive = false;
         await _db.SaveChangesAsync(ct);
 
-        await _bus.PublishAsync("user.deactivated", new { id = user.Id }, ct);
-
+       
+        await _bus.PublishAsync("user.deactivated", user, ct);
         await _keycloak.DeleteUserAsync(user.KeycloakUserId);
         return NoContent();
+        
     }
 
     [HttpGet("snapshot")]

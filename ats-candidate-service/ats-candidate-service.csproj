@@ -31,4 +31,8 @@
       <ProjectReference Include="..\ats.servicediscovery.library\ats.servicediscovery.library.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Services\" />
+    </ItemGroup>
+
 </Project>

@@ -14,6 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ats.integration.library\ats.integration.library.csproj" />
       <ProjectReference Include="..\ats.servicediscovery.library\ats.servicediscovery.library.csproj" />
     </ItemGroup>
 
