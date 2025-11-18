@@ -1,0 +1,36 @@
+controller:
+  kind: DaemonSet
+
+  hostPort:
+    enabled: true
+
+  nodeSelector:
+    ingress-ready: "true"
+
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Exists"
+      effect: "NoSchedule"
+
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: ingress-ready
+            operator: In
+            values:
+            - "true"
+
+  service:
+    type: NodePort
+    nodePorts:
+      http: 30080
+      https: 30443
+
+  admissionWebhooks:
+    patch:
+      enabled: true
+
+  ingressClassResource:
+    default: true
