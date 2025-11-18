@@ -1,13 +1,14 @@
+replicaCount: 1
+
 # image:
-#   repository: glacius27/ats-authorization-service
+#   repository: glacius27/ats-candidate-service
 #   tag: "latest"
 #   pullPolicy: IfNotPresent
+
 image:
   repository: ""
   tag: ""
   pullPolicy: IfNotPresent
-
-replicaCount: 1
 
 service:
   port: 8080
@@ -15,24 +16,29 @@ service:
 env:
   ASPNETCORE_ENVIRONMENT: "Development"
   EnableSwagger: "true"
-  POSTGRES_HOST: "authorization-postgres"
+
+  # PostgreSQL
+  POSTGRES_HOST: "candidates-postgres"
   POSTGRES_PORT: "5432"
-  POSTGRES_DB: "ats_auth"
+  POSTGRES_DB: "ats_candidates"
   POSTGRES_USER: "ats"
 
-  KEYCLOAK_URL: "http://keycloak:8080"
-  KEYCLOAK_REALM: "ats"
-  KEYCLOAK_ADMIN_CLIENT_ID: "admin-cli"
+  # Minio
+  MinioSettings__Endpoint: "minio:9000"
+  MinioSettings__AccessKey: "minioadmin"
+  MinioSettings__SecretKey: "minioadmin"
+  MinioSettings__BucketName: "resumes"
+  MinioSettings__WithSSL: "false"
 
+  # RabbitMQ
   RabbitMq__HostName: "rabbitmq"
   RabbitMq__Port: "5672"
   RabbitMq__UserName: "ats_user"
   RabbitMq__Exchange: "ats.exchange"
-  RabbitMq__ClientId: "ats-auth-service"
+  RabbitMq__ClientId: "candidate"
 
   SERVICE_DISCOVERY_ENABLED: "false"
 
 secretEnv:
   POSTGRES_PASSWORD: "ats_pass"
   RabbitMq__Password: "ats_pass"
-  KEYCLOAK_ADMIN_CLIENT_SECRET: "admin"

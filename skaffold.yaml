@@ -1,0 +1,37 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: ats
+
+build:
+  local:
+    push: false        
+  artifacts:
+    - image: glacius27/ats-authorization-service
+      context: .
+      docker:
+        dockerfile: ats-authorization-service/Dockerfile
+
+    - image: glacius27/ats-candidate-service
+      context: .
+      docker:
+        dockerfile: ats-candidate-service/Dockerfile
+
+deploy:
+  helm:
+    releases:
+      - name: authorization-service
+        chartPath: helm/ats-services/ats-authorization-service
+        namespace: ats
+        createNamespace: false
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_GLACIUS27_ATS_AUTHORIZATION_SERVICE}}"
+          image.tag: "{{.IMAGE_TAG_GLACIUS27_ATS_AUTHORIZATION_SERVICE}}"
+
+      - name: candidate-service
+        chartPath: helm/ats-services/ats-candidate-service
+        namespace: ats
+        createNamespace: false
+        setValueTemplates:
+          image.repository: "{{.IMAGE_REPO_GLACIUS27_ATS_CANDIDATE_SERVICE}}"
+          image.tag: "{{.IMAGE_TAG_GLACIUS27_ATS_CANDIDATE_SERVICE}}"

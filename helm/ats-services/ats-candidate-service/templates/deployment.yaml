@@ -1,46 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "authorization-service.fullname" . }}
+  name: {{ include "ats-candidate-service.fullname" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
-
   selector:
     matchLabels:
-      app: {{ include "authorization-service.name" . }}
-
+      app: {{ include "ats-candidate-service.fullname" . }}
   template:
     metadata:
       labels:
-        app: {{ include "authorization-service.name" . }}
-
+        app: {{ include "ats-candidate-service.fullname" . }}
     spec:
       # containers:
-      #   - name: authorization-service
+      #   - name: ats-candidate-service
       #     image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
       #     imagePullPolicy: {{ .Values.image.pullPolicy }}
       containers:
           - name: {{ .Chart.Name }}
             image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
             imagePullPolicy: {{ .Values.image.pullPolicy }}
-
           ports:
             - containerPort: {{ .Values.service.port }}
               name: http
-
           env:
 {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ include "authorization-service.fullname" $ }}-config
-                  key: {{ $key }}
+              value: "{{ $value }}"
 {{- end }}
 {{- range $key, $value := .Values.secretEnv }}
             - name: {{ $key }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "authorization-service.fullname" $ }}-secret
+                  name: {{ include "ats-candidate-service.fullname" $ }}-secret
                   key: {{ $key }}
 {{- end }}
 
@@ -49,7 +41,7 @@ spec:
               path: /health
               port: http
             initialDelaySeconds: 15
-            periodSeconds: 10
+            periodSeconds: 20
 
           readinessProbe:
             httpGet:
@@ -57,11 +49,3 @@ spec:
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
-
-          resources:
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
