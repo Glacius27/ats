@@ -1,0 +1,26 @@
+services:
+  ats-authorization-service:
+    image: ats-authorization-service
+    container_name: ats-authorization-service
+    build:
+      context: .
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+
+      POSTGRES_HOST: host.docker.internal
+      POSTGRES_PORT: 5434
+      POSTGRES_DB: ats_auth
+      POSTGRES_USER: ats
+      POSTGRES_PASSWORD: ats_pass
+
+      RABBIT_HOST: host.docker.internal
+      RABBIT_PORT: 5672
+      RABBIT_USER: ats_user
+      RABBIT_PASSWORD: ats_pass
+      RABBIT_EXCHANGE: ats.exchange
+      RABBIT_CLIENT_ID: ats-auth-service
+
+      KEYCLOAK_URL: http://host.docker.internal:8080
+      KEYCLOAK_REALM: ats
+      KEYCLOAK_ADMIN_CLIENT_ID: ats-admin
+      KEYCLOAK_ADMIN_CLIENT_SECRET: supersecret

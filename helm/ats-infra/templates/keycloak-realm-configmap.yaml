@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-realm
+data:
+  ats-realm.json: |
+{{ .Files.Get "files/ats-realm.json" | indent 4 }}

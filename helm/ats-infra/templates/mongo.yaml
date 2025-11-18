@@ -1,0 +1,43 @@
+{{- if .Values.mongo.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: vacancy-mongodb
+spec:
+  type: ClusterIP
+  ports:
+    - port: 27017
+      targetPort: 27017
+      name: mongo
+  selector:
+    app: vacancy-mongodb
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vacancy-mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vacancy-mongodb
+  template:
+    metadata:
+      labels:
+        app: vacancy-mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: {{ .Values.mongo.image }}
+          env:
+            - name: MONGO_INITDB_DATABASE
+              value: "{{ .Values.mongo.dbName }}"
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+      volumes:
+        - name: mongo-data
+          emptyDir: {}
+{{- end }}

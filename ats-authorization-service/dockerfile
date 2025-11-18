@@ -1,0 +1,28 @@
+# ============================
+# 1. BUILD STAGE
+# ============================
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Копируем ВСЁ решение в контейнер
+COPY . .
+
+# Восстанавливаем зависимости только для сервиса (но учитывая все ProjectReference)
+RUN dotnet restore "ats-authorization-service/ats-authorization-service.csproj"
+
+# Публикуем сервис
+RUN dotnet publish "ats-authorization-service/ats-authorization-service.csproj" \
+    -c Release -o /app
+
+# ============================
+# 2. RUNTIME STAGE
+# ============================
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+
+COPY --from=build /app .
+
+ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "ats-authorization-service.dll"]

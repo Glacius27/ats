@@ -1,0 +1,34 @@
+image:
+  repository: glacius27/ats-authorization-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  port: 8080
+
+env:
+  ASPNETCORE_ENVIRONMENT: "Development"
+  EnableSwagger: "true"
+  POSTGRES_HOST: "authorization-postgres"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "ats_auth"
+  POSTGRES_USER: "ats"
+
+  KEYCLOAK_URL: "http://keycloak:8080"
+  KEYCLOAK_REALM: "ats"
+  KEYCLOAK_ADMIN_CLIENT_ID: "admin-cli"
+
+  RabbitMq__HostName: "rabbitmq"
+  RabbitMq__Port: "5672"
+  RabbitMq__UserName: "ats_user"
+  RabbitMq__Exchange: "ats.exchange"
+  RabbitMq__ClientId: "ats-auth-service"
+
+  SERVICE_DISCOVERY_ENABLED: "false"
+
+secretEnv:
+  POSTGRES_PASSWORD: "ats_pass"
+  RabbitMq__Password: "ats_pass"
+  KEYCLOAK_ADMIN_CLIENT_SECRET: "admin"

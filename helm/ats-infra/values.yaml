@@ -1,0 +1,48 @@
+postgres:
+  enabled: true
+  image: postgres:15
+  username: ats
+  password: ats_pass
+  instances:
+    - name: authorization
+      dbName: ats_auth
+    - name: candidates
+      dbName: ats_candidates
+    - name: recruitment
+      dbName: ats_recruitment
+    - name: interviews
+      dbName: ats_interviews
+
+minio:
+  enabled: true
+  image: quay.io/minio/minio
+  accessKey: minioadmin
+  secretKey: minioadmin
+
+keycloak:
+  enabled: true
+  image: quay.io/keycloak/keycloak:24.0.1
+  adminUser: admin
+  adminPassword: admin
+  db:
+    image: postgres:15
+    dbName: keycloak
+    username: keycloak
+    password: keycloak
+
+redis:
+  enabled: true
+  image: redis:7.2
+  insight:
+    enabled: true
+    image: redis/redisinsight:latest
+
+mongo:
+  enabled: true
+  image: mongo:6.0
+  dbName: ats_vacancy_db
+
+rabbitmq:
+  enabled: true
+  username: "ats_user"
+  password: "ats_pass"
