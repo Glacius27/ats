@@ -1,17 +1,25 @@
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 using ats_recruitment_service.Data;
 using Ats.CandidateService.Users;
 using Ats.Integration;
 using Ats.Integration.Messaging;
 using Ats.Integration.Users;
-using Microsoft.EntityFrameworkCore;
 using Ats.ServiceDiscovery.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Подключаем DbContext
+// PostgreSQL
 builder.Services.AddDbContext<RecruitmentContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres")));
+
+
 builder.Services.AddServiceDiscovery(builder.Configuration);
+builder.Services.AddAtsIntegration(builder.Configuration);
+builder.Services.AddSingleton<UserCache>();
+builder.Services.AddSingleton<UserCacheHandler>();
+builder.Services.AddSingleton<IUserCacheHandler>(sp => sp.GetRequiredService<UserCacheHandler>());
+
 using (var tempProvider = builder.Services.BuildServiceProvider())
 {
     var sd = tempProvider.GetRequiredService<IServiceDiscoveryClient>();
@@ -29,41 +37,31 @@ using (var tempProvider = builder.Services.BuildServiceProvider())
     }
 }
 
-builder.Services.AddAtsIntegration(builder.Configuration);
-builder.Services.AddSingleton<UserCache>();
-builder.Services.AddSingleton<UserCacheHandler>();
-builder.Services.AddSingleton<IUserCacheHandler>(sp => sp.GetRequiredService<UserCacheHandler>());
-
-
-
 builder.Services.AddUserSnapshotHostedLoader<UserCacheHandler>(); 
 builder.Services.AddUserEvents();       
 
-// Контроллеры
-builder.Services.AddControllers();
-
-// Swagger
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<RecruitmentContext>();
     db.Database.Migrate();
 }
-
-// Включаем Swagger только в Dev
-// if (app.Environment.IsDevelopment())
-// {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-//}
-
-app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
