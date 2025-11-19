@@ -4,6 +4,9 @@ set -e
 
 NAMESPACE="ats"
 
+echo "=== Installing Observability stack (Prometheus + Grafana + Loki + Promtail) ==="
+helm install observability ./helm/ats-observability -n "$NAMESPACE"
+
 echo "=== Installing infrastructure ==="
 helm install infra ./helm/ats-infra -n "$NAMESPACE" --create-namespace
 
