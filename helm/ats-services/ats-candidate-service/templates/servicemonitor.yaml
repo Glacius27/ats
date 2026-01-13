@@ -1,0 +1,18 @@
+{{- if .Values.metrics.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ats-candidate-service.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ include "ats-candidate-service.fullname" . }}
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "ats-candidate-service.fullname" . }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.metrics.scrapeInterval | default "30s" }}
+{{- end }}

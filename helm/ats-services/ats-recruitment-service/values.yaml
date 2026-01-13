@@ -50,3 +50,7 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+
+metrics:
+  enabled: true
+  scrapeInterval: "30s"

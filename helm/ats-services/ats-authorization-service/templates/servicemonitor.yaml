@@ -1,0 +1,17 @@
+{{- if .Values.metrics.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "authorization-service.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "authorization-service.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ include "authorization-service.name" . }}
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: {{ .Values.metrics.scrapeInterval | default "30s" }}
+{{- end }}

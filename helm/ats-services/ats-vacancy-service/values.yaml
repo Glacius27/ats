@@ -17,7 +17,7 @@ env:
   EnableSwagger: "true"
 
   # MongoDB
-  MongoDbSettings__ConnectionString: "mongodb://mongo:27017"
+  MongoDbSettings__ConnectionString: "mongodb://vacancy-mongodb:27017"
   MongoDbSettings__DatabaseName: "ats_vacancy_db"
   MongoDbSettings__VacanciesCollection: "Vacancies"
 
@@ -48,3 +48,7 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+
+metrics:
+  enabled: true
+  scrapeInterval: "30s"

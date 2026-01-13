@@ -22,7 +22,7 @@ env:
 
   KEYCLOAK_URL: "http://keycloak:8080"
   KEYCLOAK_REALM: "ats"
-  KEYCLOAK_ADMIN_CLIENT_ID: "admin-cli"
+  KEYCLOAK_ADMIN_CLIENT_ID: "ats-admin"
 
   RabbitMq__HostName: "rabbitmq"
   RabbitMq__Port: "5672"
@@ -35,7 +35,7 @@ env:
 secretEnv:
   POSTGRES_PASSWORD: "ats_pass"
   RabbitMq__Password: "ats_pass"
-  KEYCLOAK_ADMIN_CLIENT_SECRET: "admin"
+  KEYCLOAK_ADMIN_CLIENT_SECRET: "supersecret"
 
 ingress:
   enabled: true
@@ -48,3 +48,7 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+
+metrics:
+  enabled: true
+  scrapeInterval: "30s"

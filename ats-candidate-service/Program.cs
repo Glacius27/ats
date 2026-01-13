@@ -7,6 +7,7 @@ using CandidateService.Data;
 using Microsoft.EntityFrameworkCore;
 using Minio;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -99,10 +100,17 @@ builder.Services.AddSingleton<IMinioClient>(sp =>
         .Build();
 });
 
+// Register ResumeStorageService
+builder.Services.AddSingleton<ats.ResumeStorageService>();
+
 var app = builder.Build();
 
 // Health checks
 app.MapHealthChecks("/health");
+
+// Prometheus metrics
+app.UseMetricServer();
+app.UseHttpMetrics();
 
 using (var scope = app.Services.CreateScope())
 {

@@ -5,6 +5,7 @@ using AuthorizationService.Services;
 using Ats.ServiceDiscovery.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,8 +30,10 @@ builder.Services.Configure<KeycloakOptions>(options =>
 {
     options.BaseUrl = config["KEYCLOAK_URL"] ?? "http://localhost:8080";
     options.Realm = config["KEYCLOAK_REALM"] ?? "ats";
-    options.AdminClientId = config["KEYCLOAK_ADMIN_CLIENT_ID"] ?? "ats-admin";
-    options.AdminClientSecret = config["KEYCLOAK_ADMIN_CLIENT_SECRET"] ?? "supersecret";
+    options.AdminClientId = config["KEYCLOAK_ADMIN_CLIENT_ID"] ?? "admin-cli";
+    options.AdminClientSecret = config["KEYCLOAK_ADMIN_CLIENT_SECRET"];
+    options.AdminUsername = config["KEYCLOAK_ADMIN_USERNAME"] ?? "admin";
+    options.AdminPassword = config["KEYCLOAK_ADMIN_PASSWORD"] ?? "admin";
 });
 
 // ==========================
@@ -90,6 +93,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapHealthChecks("/health");
+
+// Prometheus metrics
+app.UseMetricServer();
+app.UseHttpMetrics();
 
 // ===========================
 // DATABASE MIGRATION

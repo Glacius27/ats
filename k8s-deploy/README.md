@@ -2,6 +2,16 @@
 
 This directory contains scripts and configurations for deploying ATS microservices to Kubernetes (Docker Desktop).
 
+## Observability (Prometheus + Grafana)
+
+To set up metrics collection and visualization:
+
+```bash
+./setup-observability.sh
+```
+
+This installs Prometheus and Grafana with automatic service discovery. See [PROMETHEUS-METRICS.md](./PROMETHEUS-METRICS.md) for details.
+
 ## Prerequisites
 
 1. **Docker Desktop** with Kubernetes enabled (NOT KIND)

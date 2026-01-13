@@ -3,6 +3,39 @@ kube-prometheus-stack:
     adminPassword: "admin"
     service:
       type: ClusterIP
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hosts:
+        - grafana.local
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+  
+  prometheus:
+    service:
+      type: ClusterIP
+    ingress:
+      enabled: true
+      ingressClassName: nginx
+      hosts:
+        - prometheus.local
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+  
+  # ServiceMonitor discovery - allow ServiceMonitors in all namespaces
+  prometheusOperator:
+    serviceMonitorSelectorNilUsesHelmValues: false
+  
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorNamespaceSelector: {}
+      podMonitorSelectorNilUsesHelmValues: false
+      podMonitorNamespaceSelector: {}
+
+  # Disable node-exporter for Docker Desktop (not compatible with macOS)
+  prometheus-node-exporter:
+    enabled: false
 
 loki-stack:
   loki:

@@ -5,6 +5,7 @@ using Ats.Integration.Users;
 using VacancyService.Config;
 using VacancyService.Data;
 using Ats.ServiceDiscovery.Client;
+using Prometheus;
 var builder = WebApplication.CreateBuilder(args);
 
 // ==========================
@@ -83,6 +84,10 @@ var app = builder.Build();
 
 // Health checks
 app.MapHealthChecks("/health");
+
+// Prometheus metrics
+app.UseMetricServer();
+app.UseHttpMetrics();
 
 if (app.Environment.IsDevelopment())
 {

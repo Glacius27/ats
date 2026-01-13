@@ -7,6 +7,7 @@ using Ats.Integration.Messaging;
 using Ats.Integration.Users;
 using Ats.ServiceDiscovery.Client;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,6 +95,10 @@ var app = builder.Build();
 
 // Health checks
 app.MapHealthChecks("/health");
+
+// Prometheus metrics
+app.UseMetricServer();
+app.UseHttpMetrics();
 
 if (app.Environment.IsDevelopment())
 {
