@@ -1,5 +1,7 @@
+replicaCount: 1
+
 # image:
-#   repository: glacius27/ats-authorization-service
+#   repository: glacius27/ats-vacancy-service
 #   tag: "latest"
 #   pullPolicy: IfNotPresent
 image:
@@ -7,35 +9,33 @@ image:
   tag: ""
   pullPolicy: IfNotPresent
 
-replicaCount: 1
-
 service:
   port: 8080
 
 env:
   ASPNETCORE_ENVIRONMENT: "Development"
   EnableSwagger: "true"
-  POSTGRES_HOST: "authorization-postgres"
-  POSTGRES_PORT: "5432"
-  POSTGRES_DB: "ats_auth"
-  POSTGRES_USER: "ats"
 
-  KEYCLOAK_URL: "http://keycloak:8080"
-  KEYCLOAK_REALM: "ats"
-  KEYCLOAK_ADMIN_CLIENT_ID: "admin-cli"
+  # MongoDB
+  MongoDbSettings__ConnectionString: "mongodb://mongo:27017"
+  MongoDbSettings__DatabaseName: "ats_vacancy_db"
+  MongoDbSettings__VacanciesCollection: "Vacancies"
 
+  # RabbitMQ
   RabbitMq__HostName: "rabbitmq"
   RabbitMq__Port: "5672"
   RabbitMq__UserName: "ats_user"
   RabbitMq__Exchange: "ats.exchange"
-  RabbitMq__ClientId: "ats-auth-service"
+  RabbitMq__ClientId: "vacancy"
 
+  # Service Discovery - Disabled, using Kubernetes DNS
   SERVICE_DISCOVERY_ENABLED: "false"
+  
+  # Kubernetes service URLs (using DNS)
+  AuthService__BaseUrl: "http://ats-authorization-service:8080"
 
 secretEnv:
-  POSTGRES_PASSWORD: "ats_pass"
   RabbitMq__Password: "ats_pass"
-  KEYCLOAK_ADMIN_CLIENT_SECRET: "admin"
 
 ingress:
   enabled: true
@@ -43,7 +43,7 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
   hosts:
-    - host: authorization.local
+    - host: vacancy.local
       paths:
         - path: /
           pathType: Prefix

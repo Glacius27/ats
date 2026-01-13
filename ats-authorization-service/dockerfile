@@ -1,28 +1,47 @@
 # ============================
-# 1. BUILD STAGE
+# BUILD STAGE
 # ============================
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Копируем ВСЁ решение в контейнер
-COPY . .
+# Copy solution file and project files for better layer caching
+COPY ats.sln .
+COPY ats-authorization-service/ats-authorization-service.csproj ./ats-authorization-service/
+COPY ats.integration.library/ats.integration.library.csproj ./ats.integration.library/
+COPY ats.servicediscovery.library/ats.servicediscovery.library.csproj ./ats.servicediscovery.library/
 
-# Восстанавливаем зависимости только для сервиса (но учитывая все ProjectReference)
+# Restore dependencies
 RUN dotnet restore "ats-authorization-service/ats-authorization-service.csproj"
 
-# Публикуем сервис
-RUN dotnet publish "ats-authorization-service/ats-authorization-service.csproj" \
-    -c Release -o /app
+# Copy remaining source code
+COPY . .
+
+# Build and publish
+WORKDIR /src/ats-authorization-service
+RUN dotnet publish -c Release -o /app/publish --no-restore
 
 # ============================
-# 2. RUNTIME STAGE
+# RUNTIME STAGE
 # ============================
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-COPY --from=build /app .
+# Create a non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
+# Copy published files
+COPY --from=build /app/publish .
+
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Set environment variables
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
 EXPOSE 8080
 
 ENTRYPOINT ["dotnet", "ats-authorization-service.dll"]

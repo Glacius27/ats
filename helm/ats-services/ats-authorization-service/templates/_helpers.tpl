@@ -27,3 +27,23 @@ Chart name and version.
 {{- define "authorization-service.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" }}
 {{- end }}
+
+{{/*
+Common labels
+*/}}
+{{- define "authorization-service.labels" -}}
+helm.sh/chart: {{ include "authorization-service.chart" . }}
+{{ include "authorization-service.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
+Selector labels
+*/}}
+{{- define "authorization-service.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "authorization-service.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

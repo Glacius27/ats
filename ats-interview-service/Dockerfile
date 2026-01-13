@@ -6,18 +6,18 @@ WORKDIR /src
 
 # Copy solution file and project files for better layer caching
 COPY ats.sln .
-COPY ats-candidate-service/ats-candidate-service.csproj ./ats-candidate-service/
+COPY ats-interview-service/ats-interview-service.csproj ./ats-interview-service/
 COPY ats.integration.library/ats.integration.library.csproj ./ats.integration.library/
 COPY ats.servicediscovery.library/ats.servicediscovery.library.csproj ./ats.servicediscovery.library/
 
 # Restore dependencies
-RUN dotnet restore "ats-candidate-service/ats-candidate-service.csproj"
+RUN dotnet restore "ats-interview-service/ats-interview-service.csproj"
 
 # Copy remaining source code
 COPY . .
 
 # Build and publish
-WORKDIR /src/ats-candidate-service
+WORKDIR /src/ats-interview-service
 RUN dotnet publish -c Release -o /app/publish --no-restore
 
 # ============================
@@ -44,4 +44,4 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "ats-candidate-service.dll"]
+ENTRYPOINT ["dotnet", "ats-interview-service.dll"]

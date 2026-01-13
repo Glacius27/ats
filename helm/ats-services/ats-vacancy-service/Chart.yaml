@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ats-vacancy-service
+description: Helm chart for ATS Vacancy Service
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

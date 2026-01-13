@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ats-recruitment-service
+description: Helm chart for ATS Recruitment Service
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

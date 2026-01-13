@@ -12,21 +12,20 @@ spec:
       labels:
         app: {{ include "ats-candidate-service.fullname" . }}
     spec:
-      # containers:
-      #   - name: ats-candidate-service
-      #     image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-      #     imagePullPolicy: {{ .Values.image.pullPolicy }}
       containers:
-          - name: {{ .Chart.Name }}
-            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-            imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.port }}
               name: http
           env:
 {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
-              value: "{{ $value }}"
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "ats-candidate-service.fullname" $ }}-config
+                  key: {{ $key }}
 {{- end }}
 {{- range $key, $value := .Values.secretEnv }}
             - name: {{ $key }}
@@ -35,17 +34,22 @@ spec:
                   name: {{ include "ats-candidate-service.fullname" $ }}-secret
                   key: {{ $key }}
 {{- end }}
-
           livenessProbe:
             httpGet:
               path: /health
               port: http
             initialDelaySeconds: 15
             periodSeconds: 20
-
           readinessProbe:
             httpGet:
               path: /health
               port: http
             initialDelaySeconds: 5
             periodSeconds: 10
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "128Mi"

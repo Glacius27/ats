@@ -1,0 +1,50 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+
+# IDE files
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.user
+**/*.suo
+**/*.sln.DotSettings.user
+
+# Test files
+**/tests/
+**/*.Test/
+**/*.Tests/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+**/Dockerfile*
+**/docker-compose*.yml
+**/.dockerignore
+
+# Documentation
+**/*.md
+**/README*
+
+# Helm charts
+helm/
+
+# Scripts
+*.sh
+
+# Temporary files
+**/*.tmp
+**/*.log
+**/*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+**/.env
+**/.env.local

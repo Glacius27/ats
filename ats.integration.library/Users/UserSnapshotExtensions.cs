@@ -91,7 +91,7 @@ internal sealed class UserSnapshotLoader
     {
         _http = http;
         _log = log;
-        _baseUrl = cfg["AuthService:BaseUrl"] ?? "http://ats-authorization-service";
+        _baseUrl = cfg["AuthService:BaseUrl"] ?? cfg["AuthService__BaseUrl"] ?? "http://ats-authorization-service:8080";
     }
 
     public async Task<List<AuthUser>> LoadSnapshotAsync(CancellationToken ct)

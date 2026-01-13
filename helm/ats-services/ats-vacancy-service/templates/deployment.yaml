@@ -1,19 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "authorization-service.fullname" . }}
+  name: {{ include "ats-vacancy-service.fullname" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
-
   selector:
     matchLabels:
-      app: {{ include "authorization-service.name" . }}
-
+      app: {{ include "ats-vacancy-service.fullname" . }}
   template:
     metadata:
       labels:
-        app: {{ include "authorization-service.name" . }}
-
+        app: {{ include "ats-vacancy-service.fullname" . }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -27,14 +24,14 @@ spec:
             - name: {{ $key }}
               valueFrom:
                 configMapKeyRef:
-                  name: {{ include "authorization-service.fullname" $ }}-config
+                  name: {{ include "ats-vacancy-service.fullname" $ }}-config
                   key: {{ $key }}
 {{- end }}
 {{- range $key, $value := .Values.secretEnv }}
             - name: {{ $key }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "authorization-service.fullname" $ }}-secret
+                  name: {{ include "ats-vacancy-service.fullname" $ }}-secret
                   key: {{ $key }}
 {{- end }}
           livenessProbe:
@@ -42,7 +39,7 @@ spec:
               path: /health
               port: http
             initialDelaySeconds: 15
-            periodSeconds: 10
+            periodSeconds: 20
           readinessProbe:
             httpGet:
               path: /health

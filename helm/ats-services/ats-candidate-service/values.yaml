@@ -25,8 +25,6 @@ env:
 
   # Minio
   MinioSettings__Endpoint: "minio:9000"
-  MinioSettings__AccessKey: "minioadmin"
-  MinioSettings__SecretKey: "minioadmin"
   MinioSettings__BucketName: "resumes"
   MinioSettings__WithSSL: "false"
 
@@ -37,8 +35,26 @@ env:
   RabbitMq__Exchange: "ats.exchange"
   RabbitMq__ClientId: "candidate"
 
+  # Service Discovery - Disabled, using Kubernetes DNS
   SERVICE_DISCOVERY_ENABLED: "false"
+  
+  # Kubernetes service URLs (using DNS)
+  AuthService__BaseUrl: "http://ats-authorization-service:8080"
 
 secretEnv:
   POSTGRES_PASSWORD: "ats_pass"
   RabbitMq__Password: "ats_pass"
+  MinioSettings__AccessKey: "minioadmin"
+  MinioSettings__SecretKey: "minioadmin"
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: candidate.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
