@@ -50,7 +50,8 @@ namespace CandidateService.Controllers
             {
                 FullName = request.FullName,
                 Email = request.Email,
-                Phone = request.Phone
+                Phone = request.Phone,
+                VacancyId = request.VacancyId
             };
 
             if (request.Resume != null && request.Resume.Length > 0)

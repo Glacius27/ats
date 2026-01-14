@@ -18,5 +18,8 @@ namespace CandidateService.Models
 
         // Имя файла в MinIO
         public string? ResumeFileName { get; set; }
+        
+        // ID вакансии, на которую откликнулся кандидат
+        public string? VacancyId { get; set; }
     }
 }

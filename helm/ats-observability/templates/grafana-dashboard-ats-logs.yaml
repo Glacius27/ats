@@ -1,0 +1,134 @@
+{{- $namespace := .Release.Namespace | default "default" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ats-services-logs-dashboard
+  namespace: {{ $namespace }}
+  labels:
+    grafana_dashboard: "1"
+data:
+  ats-services-logs.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "uid": "ats-logs",
+        "title": "ATS Microservices - Logs (Loki)",
+        "tags": ["ats", "logs", "loki"],
+        "timezone": "browser",
+        "schemaVersion": 38,
+        "version": 1,
+        "refresh": "10s",
+        "time": { "from": "now-30m", "to": "now" },
+        "templating": {
+          "list": [
+            {
+              "name": "namespace",
+              "type": "constant",
+              "label": "Namespace",
+              "query": "ats",
+              "hide": 2,
+              "current": { "text": "ats", "value": "ats" }
+            },
+            {
+              "name": "service",
+              "type": "custom",
+              "label": "Service",
+              "multi": true,
+              "includeAll": true,
+              "allValue": ".*",
+              "options": [
+                { "text": "ats-authorization-service", "value": "ats-authorization-service" },
+                { "text": "ats-candidate-service", "value": "ats-candidate-service" },
+                { "text": "ats-interview-service", "value": "ats-interview-service" },
+                { "text": "ats-recruitment-service", "value": "ats-recruitment-service" },
+                { "text": "ats-vacancy-service", "value": "ats-vacancy-service" }
+              ],
+              "current": { "text": "All", "value": "$__all" }
+            },
+            {
+              "name": "level",
+              "type": "custom",
+              "label": "Level",
+              "multi": true,
+              "includeAll": true,
+              "allValue": ".*",
+              "options": [
+                { "text": "All", "value": ".*" },
+                { "text": "error", "value": "error" },
+                { "text": "warn", "value": "warn" },
+                { "text": "info", "value": "info" },
+                { "text": "debug", "value": "debug" }
+              ],
+              "current": { "text": "All", "value": "$__all" }
+            }
+          ]
+        },
+        "panels": [
+          {
+            "type": "timeseries",
+            "title": "Log volume (lines/sec) by pod",
+            "id": 1,
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum by (service) (rate({namespace=\"$namespace\", service=~\"$service\"}[5m]))"
+              }
+            ],
+            "fieldConfig": { "defaults": { "unit": "ops", "min": 0 } }
+          },
+          {
+            "type": "timeseries",
+            "title": "Errors (lines/sec) by pod",
+            "id": 2,
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "sum by (service) (rate({namespace=\"$namespace\", service=~\"$service\"} |= \"error\" [5m]))"
+              }
+            ],
+            "fieldConfig": { "defaults": { "unit": "ops", "min": 0 } }
+          },
+          {
+            "type": "logs",
+            "title": "Recent logs (filtered)",
+            "id": 3,
+            "gridPos": { "h": 12, "w": 24, "x": 0, "y": 8 },
+            "options": {
+              "showTime": true,
+              "showLabels": true,
+              "wrapLogMessage": true,
+              "prettifyLogMessage": false,
+              "dedupStrategy": "none"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "{namespace=\"$namespace\", service=~\"$service\"} |~ \"(?i)$level\""
+              }
+            ]
+          },
+          {
+            "type": "logs",
+            "title": "Exceptions (.NET) / stack traces",
+            "id": 4,
+            "gridPos": { "h": 12, "w": 24, "x": 0, "y": 20 },
+            "options": {
+              "showTime": true,
+              "showLabels": false,
+              "wrapLogMessage": true,
+              "prettifyLogMessage": false,
+              "dedupStrategy": "none"
+            },
+            "targets": [
+              {
+                "refId": "A",
+                "expr": "{namespace=\"$namespace\", service=~\"$service\"} |~ \"(System\\\\.|Unhandled exception|fail:|crit:|exception)\""
+              }
+            ]
+          }
+        ]
+      }
+    }
+

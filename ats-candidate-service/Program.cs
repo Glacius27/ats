@@ -39,7 +39,54 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(pgConnString, name: "postgres");
 
 
-builder.Services.AddControllers();
+// CORS configuration
+var corsEnabled = config.GetValue("Cors:Enabled", true);
+var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>();
+var isDevelopment = config.GetValue("ASPNETCORE_ENVIRONMENT", "Production") == "Development";
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        if (corsEnabled)
+        {
+            if (allowedOrigins != null && allowedOrigins.Length > 0)
+            {
+                // Use configured origins
+                policy.WithOrigins(allowedOrigins)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            }
+            else if (isDevelopment)
+            {
+                // In development, allow all origins for easier testing (Kubernetes, localhost, etc.)
+                policy.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            }
+            else
+            {
+                // Production: default to localhost origins
+                policy.WithOrigins(
+                        "http://localhost:3000",
+                        "http://localhost:5173",
+                        "http://127.0.0.1:3000"
+                    )
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            }
+        }
+    });
+});
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -104,6 +151,9 @@ builder.Services.AddSingleton<IMinioClient>(sp =>
 builder.Services.AddSingleton<ats.ResumeStorageService>();
 
 var app = builder.Build();
+
+// CORS must be before other middleware
+app.UseCors();
 
 // Health checks
 app.MapHealthChecks("/health");

@@ -8,4 +8,5 @@ public class CandidateCreateRequest
     
     public string Status { get; set; } = "active";
     public IFormFile? Resume { get; set; }  // файл приходит в multipart/form-data
+    public string? VacancyId { get; set; }  // ID вакансии, на которую откликнулся кандидат
 }

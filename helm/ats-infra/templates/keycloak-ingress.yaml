@@ -3,7 +3,11 @@ kind: Ingress
 metadata:
   name: keycloak
   namespace: ats
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
+  ingressClassName: nginx
   rules:
     - host: keycloak.ats.local
       http:

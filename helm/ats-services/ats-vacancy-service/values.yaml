@@ -16,6 +16,10 @@ env:
   ASPNETCORE_ENVIRONMENT: "Development"
   EnableSwagger: "true"
 
+  # CORS Configuration
+  Cors__Enabled: "true"
+  # Cors__AllowedOrigins can be set as array if needed, e.g., ["http://frontend.local", "http://localhost:3000"]
+
   # MongoDB
   MongoDbSettings__ConnectionString: "mongodb://vacancy-mongodb:27017"
   MongoDbSettings__DatabaseName: "ats_vacancy_db"

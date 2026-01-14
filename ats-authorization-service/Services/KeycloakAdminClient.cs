@@ -123,4 +123,60 @@ public class KeycloakAdminClient
         using var resp = await _http.DeleteAsync(url, ct);
         return resp.IsSuccessStatusCode;
     }
+
+    public async Task<KeycloakUserInfo?> GetUserAsync(string keycloakUserId, CancellationToken ct = default)
+    {
+        await WithAuthAsync(ct);
+        var url = $"admin/realms/{_opt.Realm}/users/{keycloakUserId}";
+        using var resp = await _http.GetAsync(url, ct);
+        
+        if (resp.StatusCode == System.Net.HttpStatusCode.NotFound)
+            return null;
+        
+        resp.EnsureSuccessStatusCode();
+        
+        var json = await resp.Content.ReadAsStringAsync(ct);
+        return JsonSerializer.Deserialize<KeycloakUserInfo>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+
+    public async Task<List<string>> GetUserRealmRolesAsync(string keycloakUserId, CancellationToken ct = default)
+    {
+        await WithAuthAsync(ct);
+        var url = $"admin/realms/{_opt.Realm}/users/{keycloakUserId}/role-mappings/realm";
+        using var resp = await _http.GetAsync(url, ct);
+        
+        if (!resp.IsSuccessStatusCode)
+            return new List<string>();
+        
+        var json = await resp.Content.ReadAsStringAsync(ct);
+        var roles = JsonSerializer.Deserialize<List<KeycloakRole>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        return roles?.Select(r => r.Name ?? r.Id).ToList() ?? new List<string>();
+    }
+
+    public async Task<List<KeycloakUserInfo>> GetAllUsersAsync(CancellationToken ct = default)
+    {
+        await WithAuthAsync(ct);
+        var url = $"admin/realms/{_opt.Realm}/users";
+        using var resp = await _http.GetAsync(url, ct);
+        resp.EnsureSuccessStatusCode();
+        
+        var json = await resp.Content.ReadAsStringAsync(ct);
+        return JsonSerializer.Deserialize<List<KeycloakUserInfo>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<KeycloakUserInfo>();
+    }
+}
+
+public class KeycloakUserInfo
+{
+    public string Id { get; set; } = null!;
+    public string? Username { get; set; }
+    public string? Email { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public bool Enabled { get; set; } = true;
+}
+
+public class KeycloakRole
+{
+    public string Id { get; set; } = null!;
+    public string? Name { get; set; }
 }

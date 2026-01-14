@@ -1,0 +1,152 @@
+{{- if .Values.promtail.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ats-observability-promtail
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+    spec:
+      serviceAccountName: ats-observability-promtail
+      containers:
+      - name: promtail
+        image: grafana/promtail:2.9.2
+        args:
+          - -config.file=/etc/promtail/config.yml
+          - -log.level=debug
+        ports:
+        - containerPort: 3101
+          name: http-metrics
+        volumeMounts:
+        - name: config
+          mountPath: /etc/promtail
+        - name: docker-logs
+          mountPath: /var/log
+          readOnly: true
+        - name: pods
+          mountPath: /var/log/pods
+          readOnly: true
+        - name: docker-containers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 50m
+          limits:
+            memory: 256Mi
+            cpu: 200m
+      volumes:
+      - name: config
+        configMap:
+          name: ats-observability-promtail-config
+      - name: docker-logs
+        hostPath:
+          path: /var/log
+      - name: pods
+        hostPath:
+          path: /var/log/pods
+      - name: docker-containers
+        hostPath:
+          path: /var/lib/docker/containers
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ats-observability-promtail
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ats-observability-promtail
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ats-observability-promtail
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ats-observability-promtail
+subjects:
+- kind: ServiceAccount
+  name: ats-observability-promtail
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ats-observability-promtail-config
+  namespace: {{ .Release.Namespace }}
+data:
+  config.yml: |
+    server:
+      http_listen_port: 3101
+      grpc_listen_port: 9095
+
+    positions:
+      filename: /tmp/positions.yaml
+
+    clients:
+      - url: http://ats-observability-loki.{{ .Release.Namespace }}.svc.cluster.local:3100/loki/api/v1/push
+
+    scrape_configs:
+      # Docker Desktop note:
+      # /var/log/pods/*/*.log are symlinks to /var/lib/docker/containers/*/*-json.log.
+      # We mount both paths and use static_configs per ATS service to guarantee targets.
+      - job_name: ats-authorization-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              namespace: {{ .Release.Namespace | quote }}
+              service: ats-authorization-service
+              __path__: /var/log/pods/{{ .Release.Namespace }}_ats-authorization-service-*/*/*.log
+
+      - job_name: ats-candidate-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              namespace: {{ .Release.Namespace | quote }}
+              service: ats-candidate-service
+              __path__: /var/log/pods/{{ .Release.Namespace }}_ats-candidate-service-*/*/*.log
+
+      - job_name: ats-interview-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              namespace: {{ .Release.Namespace | quote }}
+              service: ats-interview-service
+              __path__: /var/log/pods/{{ .Release.Namespace }}_ats-interview-service-*/*/*.log
+
+      - job_name: ats-recruitment-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              namespace: {{ .Release.Namespace | quote }}
+              service: ats-recruitment-service
+              __path__: /var/log/pods/{{ .Release.Namespace }}_ats-recruitment-service-*/*/*.log
+
+      - job_name: ats-vacancy-service
+        static_configs:
+          - targets: [localhost]
+            labels:
+              namespace: {{ .Release.Namespace | quote }}
+              service: ats-vacancy-service
+              __path__: /var/log/pods/{{ .Release.Namespace }}_ats-vacancy-service-*/*/*.log
+{{- end }}

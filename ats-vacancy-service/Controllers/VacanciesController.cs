@@ -44,7 +44,11 @@ namespace VacancyService.Controllers
                 Id = ObjectId.GenerateNewId().ToString(),
                 Title = request.Title,
                 Description = request.Description,
-                Location = request.Location
+                Location = request.Location,
+                Department = request.Department ?? string.Empty,
+                RecruiterId = request.RecruiterId ?? string.Empty,
+                Status = "Open",
+                CreatedAt = DateTime.UtcNow
             };
 
             await _repository.CreateAsync(vacancy);
@@ -54,7 +58,11 @@ namespace VacancyService.Controllers
                 Id = vacancy.Id,
                 Title = vacancy.Title,
                 Description = vacancy.Description,
-                Location = vacancy.Location
+                Location = vacancy.Location,
+                Department = vacancy.Department,
+                Status = vacancy.Status,
+                RecruiterId = vacancy.RecruiterId,
+                CreatedAt = vacancy.CreatedAt
             };
 
             return CreatedAtAction(nameof(GetById), new { id = vacancy.Id }, response);

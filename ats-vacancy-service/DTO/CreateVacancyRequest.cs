@@ -5,4 +5,6 @@ public class CreateVacancyRequest
     public string Title { get; set; } = null!;
     public string Description { get; set; } = null!;
     public string Location { get; set; } = null!;
+    public string? Department { get; set; }
+    public string? RecruiterId { get; set; }
 }

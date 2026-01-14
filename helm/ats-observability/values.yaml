@@ -37,11 +37,8 @@ kube-prometheus-stack:
   prometheus-node-exporter:
     enabled: false
 
-loki-stack:
-  loki:
-    enabled: true
-    persistence:
-      enabled: false
+loki:
+  enabled: true
 
-  promtail:
-    enabled: true
+promtail:
+  enabled: true

@@ -20,7 +20,14 @@
       "implicitFlowEnabled": false,
       "directAccessGrantsEnabled": true,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["http://localhost:5173/*"],
+      "redirectUris": [
+        "http://localhost:3000/*",
+        "http://localhost:3000/",
+        "http://localhost:5173/*",
+        "http://localhost:5173/",
+        "http://localhost:3000",
+        "http://localhost:5173"
+      ],
       "webOrigins": ["*"]
     },
     {
@@ -53,6 +60,9 @@
     {
       "username": "candidate",
       "enabled": true,
+      "email": "candidate@example.com",
+      "firstName": "Иван",
+      "lastName": "Кандидатов",
       "emailVerified": true,
       "credentials": [
         { "type": "password", "value": "123456", "temporary": false }
@@ -62,6 +72,9 @@
     {
       "username": "recruiter",
       "enabled": true,
+      "email": "recruiter@example.com",
+      "firstName": "Мария",
+      "lastName": "Рекрутерова",
       "emailVerified": true,
       "credentials": [
         { "type": "password", "value": "123456", "temporary": false }
@@ -71,6 +84,9 @@
     {
       "username": "manager",
       "enabled": true,
+      "email": "manager@example.com",
+      "firstName": "Александр",
+      "lastName": "Менеджеров",
       "emailVerified": true,
       "credentials": [
         { "type": "password", "value": "123456", "temporary": false }
