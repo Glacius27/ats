@@ -13,7 +13,9 @@ export const Vacancies: React.FC = () => {
       try {
         setLoading(true);
         const data = await vacancyService.getAll();
-        setVacancies(data);
+        // Фильтруем только открытые вакансии (не архивные и не закрытые)
+        const openVacancies = data.filter(v => v.status === 'Open');
+        setVacancies(openVacancies);
         setError(null);
       } catch (err: any) {
         console.error('Error fetching vacancies:', err);

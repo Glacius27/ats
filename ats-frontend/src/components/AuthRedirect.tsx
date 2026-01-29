@@ -10,11 +10,18 @@ export const AuthRedirect: React.FC = () => {
   useEffect(() => {
     // Only redirect if we're on the home page and user is authenticated
     if (!isLoading && isAuthenticated && location.pathname === '/') {
-      // Redirect recruiters and managers to dashboard
-      if (roles.includes('Recruiter') || roles.includes('Manager')) {
+      // Проверяем роли с учетом регистра
+      const hasRecruiterRole = roles.some(role => role.toLowerCase() === 'recruiter');
+      const hasManagerRole = roles.some(role => role.toLowerCase() === 'manager');
+      
+      // Redirect managers to evaluation page
+      if (hasManagerRole) {
+        navigate('/manager/evaluation', { replace: true });
+      } else if (hasRecruiterRole) {
+        // Redirect recruiters to dashboard
         navigate('/dashboard', { replace: true });
       } else if (isAuthenticated) {
-        // Other authenticated users also go to dashboard
+        // Other authenticated users go to dashboard
         navigate('/dashboard', { replace: true });
       }
     }

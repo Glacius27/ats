@@ -9,6 +9,7 @@ interface CandidateWithVacancy extends Candidate {
   vacancyTitle?: string;
   vacancyId?: string;
   applicationId?: number;
+  displayStatus?: string; // Статус для отображения (может отличаться от статуса в БД)
 }
 
 export const RecruiterCandidates: React.FC = () => {
@@ -45,34 +46,107 @@ export const RecruiterCandidates: React.FC = () => {
       console.log('Loaded applications:', applicationsData);
       console.log('Loaded vacancies:', vacanciesData);
       
+      // Отладочная информация для связывания
+      console.log('Vacancy IDs from vacancies:', vacanciesData.map(v => ({ id: v.id, title: v.title, idType: typeof v.id })));
+      console.log('Vacancy IDs from candidates:', candidatesData.map(c => ({ 
+        candidateId: c.id, 
+        candidateIdType: typeof c.id,
+        vacancyId: c.vacancyId, 
+        vacancyIdType: typeof c.vacancyId,
+        fullName: c.fullName 
+      })));
+      console.log('Applications mapping:', applicationsData.map(app => ({ 
+        applicationId: app.id, 
+        candidateId: app.candidateId, 
+        vacancyId: app.vacancyId 
+      })));
+      
       // Связываем кандидатов с вакансиями
       const candidatesWithVacancies: CandidateWithVacancy[] = candidatesData.map(candidate => {
-        // Сначала проверяем, есть ли vacancyId в самом кандидате (из отклика)
-        let vacancyId = candidate.vacancyId;
-        let vacancy = vacancyId ? vacanciesData.find(v => v.id === vacancyId) : undefined;
+        let vacancyId: string | undefined = candidate.vacancyId;
+        let vacancy = undefined;
         let applicationId: number | undefined;
         
-        // Если vacancyId нет в кандидате, ищем через applications
-        if (!vacancyId) {
+        console.log(`Processing candidate ${candidate.id} (${candidate.fullName}):`, {
+          candidateVacancyId: candidate.vacancyId,
+          candidateVacancyIdType: typeof candidate.vacancyId,
+        });
+        
+        // Сначала проверяем, есть ли vacancyId в самом кандидате (из отклика)
+        if (vacancyId) {
+          // Нормализуем ID для сравнения (убираем пробелы, приводим к строке)
+          vacancyId = String(vacancyId).trim();
+          console.log(`  Looking for vacancy with ID: "${vacancyId}"`);
+          
+          // Пробуем разные варианты сравнения
+          vacancy = vacanciesData.find(v => {
+            const vId = String(v.id).trim();
+            const match = vId === vacancyId;
+            if (match) {
+              console.log(`  ✓ Found vacancy: "${v.title}" (ID: ${vId})`);
+            }
+            return match;
+          });
+          
+          if (!vacancy) {
+            console.warn(`  ✗ Vacancy not found with exact match. Available IDs:`, 
+              vacanciesData.map(v => ({ id: String(v.id).trim(), title: v.title }))
+            );
+          }
+        } else {
+          console.log(`  No vacancyId in candidate`);
+        }
+        
+        // Если вакансия не найдена через vacancyId кандидата, ищем через applications
+        if (!vacancy) {
+          const candidateIdStr = String(candidate.id).trim();
+          console.log(`  Trying to find via applications for candidate ID: "${candidateIdStr}"`);
+          
           const application = applicationsData.find(app => {
             const appCandidateId = String(app.candidateId).trim();
-            const candidateId = String(candidate.id).trim();
-            return appCandidateId === candidateId;
+            const match = appCandidateId === candidateIdStr;
+            if (match) {
+              console.log(`  ✓ Found application:`, app);
+            }
+            return match;
           });
           
           if (application) {
-            vacancyId = application.vacancyId;
-            vacancy = vacanciesData.find(v => v.id === application.vacancyId);
+            vacancyId = String(application.vacancyId).trim();
+            console.log(`  Looking for vacancy from application with ID: "${vacancyId}"`);
+            vacancy = vacanciesData.find(v => String(v.id).trim() === vacancyId);
+            if (vacancy) {
+              console.log(`  ✓ Found vacancy via application: "${vacancy.title}"`);
+            }
             applicationId = application.id;
+          } else {
+            console.log(`  ✗ No application found for candidate`);
           }
         }
         
-        return {
+        // Определяем статус для отображения: если есть application, значит кандидат в воронке
+        let displayStatus = candidate.status;
+        if (applicationId && candidate.status === 'active') {
+          displayStatus = 'in_progress'; // В работе
+        }
+        
+        const result = {
           ...candidate,
-          vacancyTitle: vacancy?.title,
+          vacancyTitle: vacancy?.title || (vacancyId ? `Вакансия ID: ${vacancyId}` : undefined),
           vacancyId: vacancyId,
           applicationId: applicationId,
+          displayStatus: displayStatus, // Статус для отображения
         };
+        
+        console.log(`  Final result for candidate ${candidate.id}:`, {
+          vacancyTitle: result.vacancyTitle,
+          vacancyId: result.vacancyId,
+          applicationId: result.applicationId,
+          status: candidate.status,
+          displayStatus: result.displayStatus,
+        });
+        
+        return result;
       });
       
       console.log('Candidates with vacancies:', candidatesWithVacancies);
@@ -113,16 +187,36 @@ export const RecruiterCandidates: React.FC = () => {
     }
     
     try {
-      // Обновляем статус кандидата на "rejected"
-      // TODO: Добавить endpoint для обновления статуса кандидата
       setError(null);
-      // Пока просто обновляем локально
+      
+      if (!token) {
+        setError('Токен авторизации отсутствует. Пожалуйста, войдите заново.');
+        return;
+      }
+      
+      // Обновляем статус кандидата на "rejected" через API
+      await candidateService.updateStatus(candidate.id, 'rejected', token);
+      
+      // Обновляем локальное состояние
       setCandidates(prev => prev.map(c => 
-        c.id === candidate.id ? { ...c, status: 'rejected' } : c
+        c.id === candidate.id ? { ...c, status: 'rejected', displayStatus: 'rejected' } : c
+      ));
+      setFilteredCandidates(prev => prev.map(c => 
+        c.id === candidate.id ? { ...c, status: 'rejected', displayStatus: 'rejected' } : c
       ));
     } catch (err: any) {
-      setError('Не удалось обновить статус кандидата');
       console.error('Error rejecting candidate:', err);
+      let errorMessage = 'Не удалось обновить статус кандидата';
+      
+      if (err.response?.status === 401) {
+        errorMessage = 'Ошибка авторизации. Пожалуйста, войдите заново.';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     }
   };
 
@@ -142,16 +236,39 @@ export const RecruiterCandidates: React.FC = () => {
         status: 'New',
       };
 
-      await recruitmentService.createApplication(request, token);
+      console.log('Creating application with request:', request);
+      const createdApplication = await recruitmentService.createApplication(request, token);
+      console.log('Application created successfully:', createdApplication);
       
+      // Обновляем статус кандидата локально на "В работе" (будет обновлено после fetchData)
       setShowStartPipelineForm(false);
       setSelectedCandidate(null);
       setSelectedVacancyId('');
       alert('Кандидат успешно добавлен в воронку подбора!');
+      
+      // Перезагружаем данные, чтобы получить актуальный applicationId и обновить статус
       await fetchData();
     } catch (err: any) {
       console.error('Error starting pipeline:', err);
-      setError(err.response?.data?.message || 'Не удалось добавить кандидата в воронку');
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        statusText: err.response?.statusText,
+      });
+      
+      let errorMessage = 'Не удалось добавить кандидата в воронку';
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.status === 409) {
+        errorMessage = 'Кандидат уже добавлен в воронку для этой вакансии';
+      } else if (err.response?.status === 400) {
+        errorMessage = err.response.data || 'Некорректные данные запроса';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -269,17 +386,30 @@ export const RecruiterCandidates: React.FC = () => {
             {filteredCandidates.map((candidate) => (
               <div key={candidate.id} className="candidate-card">
                 <div className="candidate-card-header">
-                  <h3>{candidate.fullName}</h3>
-                  <span className={`candidate-status ${candidate.status?.toLowerCase()}`}>
-                    {candidate.status === 'active' ? 'Активен' : candidate.status}
+                  <div className="candidate-header-info">
+                    <h3>{candidate.fullName}</h3>
+                    {candidate.vacancyTitle && (
+                      <div className="candidate-vacancy-badge">
+                        📋 {candidate.vacancyTitle}
+                      </div>
+                    )}
+                  </div>
+                  <span className={`candidate-status ${(candidate.displayStatus || candidate.status)?.toLowerCase()}`}>
+                    {(candidate.displayStatus || candidate.status) === 'active' ? 'Активен' : 
+                     (candidate.displayStatus || candidate.status) === 'in_progress' ? 'В работе' :
+                     candidate.status === 'rejected' ? 'Отказано' : 
+                     candidate.status || 'Активен'}
                   </span>
                 </div>
                 <div className="candidate-card-body">
-                  {candidate.vacancyTitle && (
-                    <div className="candidate-info-item candidate-vacancy">
-                      <strong>Вакансия:</strong> {candidate.vacancyTitle}
-                    </div>
-                  )}
+                  <div className="candidate-info-item candidate-vacancy">
+                    <strong>Вакансия:</strong>{' '}
+                    {candidate.vacancyTitle ? (
+                      <span className="vacancy-title-text">{candidate.vacancyTitle}</span>
+                    ) : (
+                      <span className="vacancy-title-empty">Не указана</span>
+                    )}
+                  </div>
                   <div className="candidate-info-item">
                     <strong>Email:</strong> {candidate.email}
                   </div>
@@ -301,21 +431,38 @@ export const RecruiterCandidates: React.FC = () => {
                       Скачать резюме
                     </button>
                   )}
-                  <button
-                    onClick={() => {
-                      setSelectedCandidate(candidate);
-                      setShowStartPipelineForm(true);
-                    }}
-                    className="btn btn-primary"
-                  >
-                    Запустить в воронку
-                  </button>
-                  <button
-                    onClick={() => handleRejectCandidate(candidate)}
-                    className="btn btn-reject"
-                  >
-                    Отказать
-                  </button>
+                  {candidate.status !== 'rejected' && (
+                    <>
+                      {/* Показываем кнопку "Запустить в воронку" только если кандидат еще не в воронке */}
+                      {!candidate.applicationId && (
+                        <button
+                          onClick={() => {
+                            setSelectedCandidate(candidate);
+                            setShowStartPipelineForm(true);
+                          }}
+                          className="btn btn-primary"
+                        >
+                          Запустить в воронку
+                        </button>
+                      )}
+                      {/* Показываем кнопку "Отказать" только если кандидат не в воронке */}
+                      {!candidate.applicationId && (
+                        <button
+                          onClick={() => handleRejectCandidate(candidate)}
+                          className="btn btn-reject"
+                        >
+                          Отказать
+                        </button>
+                      )}
+                      {/* Если кандидат в воронке, показываем индикатор */}
+                      {candidate.applicationId && (
+                        <span className="in-progress-indicator">В воронке подбора</span>
+                      )}
+                    </>
+                  )}
+                  {candidate.status === 'rejected' && (
+                    <span className="rejected-indicator">Кандидат отклонен</span>
+                  )}
                 </div>
               </div>
             ))}

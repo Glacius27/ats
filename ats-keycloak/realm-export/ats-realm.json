@@ -23,10 +23,13 @@
       "redirectUris": [
         "http://localhost:3000/*",
         "http://localhost:3000/",
+        "http://localhost:3000",
         "http://localhost:5173/*",
         "http://localhost:5173/",
-        "http://localhost:3000",
-        "http://localhost:5173"
+        "http://localhost:5173",
+        "http://frontend.local/*",
+        "http://frontend.local/",
+        "http://frontend.local"
       ],
       "webOrigins": ["*"]
     },

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import keycloak from '../config/keycloak';
 
 const API_BASE_URL = process.env.REACT_APP_RECRUITMENT_SERVICE_URL || 'http://recruitment.local';
 
@@ -48,13 +49,25 @@ const recruitmentApi = axios.create({
 // Add auth token to requests
 recruitmentApi.interceptors.request.use(
   (config) => {
-    const keycloak = (window as any).keycloak;
-    if (keycloak && keycloak.token) {
+    // Add token from keycloak if available and not already set
+    if (keycloak && keycloak.token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${keycloak.token}`;
     }
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for debugging
+recruitmentApi.interceptors.response.use(
+  (response) => {
+    console.log('Recruitment service response:', response.data);
+    return response;
+  },
+  (error) => {
+    console.error('Recruitment service error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
@@ -81,11 +94,25 @@ export const recruitmentService = {
   },
 
   createApplication: async (request: CreateApplicationRequest, token?: string): Promise<Application> => {
-    const config = token ? {
+    // Используем токен из параметра, если передан, иначе из keycloak
+    const authToken = token || keycloak.token;
+    const config = authToken ? {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
       },
-    } : {};
+    } : {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    
+    console.log('Creating application:', {
+      url: `${API_BASE_URL}/api/applications`,
+      request: request,
+      hasToken: !!authToken,
+    });
+    
     const response = await recruitmentApi.post<Application>('', request, config);
     return response.data;
   },

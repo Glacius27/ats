@@ -1,9 +1,8 @@
 using ats_recruitment_service.Data;
 using ats_recruitment_service.Models;
+using ats_recruitment_service.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ats_recruitment_service.Data;
-using ats_recruitment_service.Models;
 
 namespace RecruitmentService.Controllers
 {
@@ -39,10 +38,37 @@ namespace RecruitmentService.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Application>> Create(Application application)
+        public async Task<ActionResult<Application>> Create([FromBody] CreateApplicationRequest request)
         {
-            application.CreatedAt = DateTime.UtcNow;
-            application.UpdatedAt = DateTime.UtcNow;
+            if (string.IsNullOrWhiteSpace(request.CandidateId))
+            {
+                return BadRequest("CandidateId is required");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.VacancyId))
+            {
+                return BadRequest("VacancyId is required");
+            }
+
+            // Проверяем, не существует ли уже такая заявка
+            var existingApplication = await _context.Applications
+                .FirstOrDefaultAsync(a => 
+                    a.CandidateId == request.CandidateId && 
+                    a.VacancyId == request.VacancyId);
+
+            if (existingApplication != null)
+            {
+                return Conflict(new { message = "Application already exists for this candidate and vacancy", application = existingApplication });
+            }
+
+            var application = new Application
+            {
+                CandidateId = request.CandidateId,
+                VacancyId = request.VacancyId,
+                Status = request.Status ?? "New",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
 
             _context.Applications.Add(application);
             await _context.SaveChangesAsync();

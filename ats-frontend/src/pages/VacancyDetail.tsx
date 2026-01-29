@@ -33,6 +33,14 @@ export const VacancyDetail: React.FC = () => {
       try {
         setLoading(true);
         const data = await vacancyService.getById(id);
+        
+        // Если вакансия в архиве, не показываем её в публичном разделе
+        if (data.status === 'Archived' || data.status === 'Closed') {
+          setError('Вакансия недоступна');
+          setLoading(false);
+          return;
+        }
+        
         setVacancy(data);
         setError(null);
       } catch (err: any) {

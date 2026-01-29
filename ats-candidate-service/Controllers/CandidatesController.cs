@@ -46,6 +46,8 @@ namespace CandidateService.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] CandidateCreateRequest request)
         {
+            Console.WriteLine($"[CandidateService] Creating candidate: FullName={request.FullName}, Email={request.Email}, VacancyId={request.VacancyId}");
+            
             var candidate = new Candidate
             {
                 FullName = request.FullName,
@@ -53,6 +55,8 @@ namespace CandidateService.Controllers
                 Phone = request.Phone,
                 VacancyId = request.VacancyId
             };
+            
+            Console.WriteLine($"[CandidateService] Candidate created with VacancyId={candidate.VacancyId}");
 
             if (request.Resume != null && request.Resume.Length > 0)
             {
@@ -64,6 +68,8 @@ namespace CandidateService.Controllers
 
             _context.Candidates.Add(candidate);
             await _context.SaveChangesAsync();
+            
+            Console.WriteLine($"[CandidateService] Candidate saved with Id={candidate.Id}, VacancyId={candidate.VacancyId}");
 
             return Ok(candidate);
         }

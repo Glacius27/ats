@@ -13,6 +13,18 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
 }) => {
   const { isAuthenticated, isLoading, roles } = useAuth();
 
+  // Проверяем роли с учетом регистра
+  const hasRequiredRole = requiredRoles.some(requiredRole => 
+    roles.some(role => role.toLowerCase() === requiredRole.toLowerCase())
+  );
+
+  // Логирование для отладки (должно быть до всех условных возвратов)
+  React.useEffect(() => {
+    console.log('RoleProtectedRoute - Current roles:', roles);
+    console.log('RoleProtectedRoute - Required roles:', requiredRoles);
+    console.log('RoleProtectedRoute - Has required role:', hasRequiredRole);
+  }, [roles, requiredRoles, hasRequiredRole]);
+
   if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -25,14 +37,13 @@ export const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
     return <Navigate to="/" replace />;
   }
 
-  const hasRequiredRole = requiredRoles.some(role => roles.includes(role));
-
   if (!hasRequiredRole) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
         <h2>Доступ запрещен</h2>
         <p>У вас нет необходимых прав для доступа к этой странице.</p>
         <p>Требуемые роли: {requiredRoles.join(', ')}</p>
+        <p>Ваши роли: {roles.length > 0 ? roles.join(', ') : 'Нет ролей'}</p>
       </div>
     );
   }

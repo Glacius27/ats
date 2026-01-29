@@ -38,6 +38,7 @@ export const Recruitment: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateApplication | null>(null);
+  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchData();
@@ -119,6 +120,22 @@ export const Recruitment: React.FC = () => {
     return null;
   };
 
+  const toggleCardExpansion = (candidateId: number) => {
+    setExpandedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(candidateId)) {
+        newSet.delete(candidateId);
+      } else {
+        newSet.add(candidateId);
+      }
+      return newSet;
+    });
+  };
+
+  const isCardExpanded = (candidateId: number) => {
+    return expandedCards.has(candidateId);
+  };
+
   if (loading) {
     return (
       <div className="recruitment-loading">
@@ -175,11 +192,25 @@ export const Recruitment: React.FC = () => {
                 </div>
 
                 <div className="recruitment-stages">
-                  <div className="stages-timeline">
+                  <div className="stages-header">
+                    <h4>Этапы подбора</h4>
+                    <button
+                      onClick={() => toggleCardExpansion(ca.candidate.id)}
+                      className="btn-toggle-stages"
+                    >
+                      {isCardExpanded(ca.candidate.id) ? 'Свернуть' : 'Показать все этапы'}
+                    </button>
+                  </div>
+                  <div className={`stages-timeline ${isCardExpanded(ca.candidate.id) ? 'expanded' : 'collapsed'}`}>
                     {RECRUITMENT_STAGES.map((stage, index) => {
                       const isCompleted = index < currentIndex;
                       const isCurrent = index === currentIndex;
                       const isPending = index > currentIndex;
+                      const isExpanded = isCardExpanded(ca.candidate.id);
+                      // Показываем только текущий этап, если карточка свернута
+                      const shouldShow = isExpanded || isCurrent || isCompleted;
+
+                      if (!shouldShow) return null;
 
                       return (
                         <div
@@ -198,6 +229,16 @@ export const Recruitment: React.FC = () => {
                         </div>
                       );
                     })}
+                    {!isCardExpanded(ca.candidate.id) && currentIndex < RECRUITMENT_STAGES.length - 1 && (
+                      <div className="stage-item-placeholder">
+                        <div className="stage-marker">
+                          <span>...</span>
+                        </div>
+                        <div className="stage-content">
+                          <div className="stage-name">Еще {RECRUITMENT_STAGES.length - currentIndex - 1} этапов</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -38,6 +38,47 @@ builder.Services.AddDbContext<RecruitmentContext>(options =>
 builder.Services.AddHealthChecks()
     .AddNpgSql(pgConnString, name: "postgres");
 
+// CORS configuration
+var corsEnabled = config.GetValue("Cors:Enabled", true);
+var allowedOrigins = config.GetSection("Cors:AllowedOrigins").Get<string[]>();
+var isDevelopment = config.GetValue("ASPNETCORE_ENVIRONMENT", "Production") == "Development";
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        if (corsEnabled)
+        {
+            if (allowedOrigins != null && allowedOrigins.Length > 0)
+            {
+                // Use configured origins
+                policy.WithOrigins(allowedOrigins)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            }
+            else if (isDevelopment)
+            {
+                // In development, allow all origins for easier testing (Kubernetes, localhost, etc.)
+                policy.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader();
+            }
+            else
+            {
+                // Production: default to localhost origins
+                policy.WithOrigins(
+                        "http://localhost:3000",
+                        "http://localhost:5173",
+                        "http://127.0.0.1:3000"
+                    )
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            }
+        }
+    });
+});
 
 // Service Discovery (optional)
 var serviceDiscoveryEnabled = config.GetValue("SERVICE_DISCOVERY_ENABLED", false);
@@ -87,11 +128,25 @@ builder.Services
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Database migrations
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<RecruitmentContext>();
+    db.Database.Migrate();
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 // Health checks
 app.MapHealthChecks("/health");
@@ -100,23 +155,10 @@ app.MapHealthChecks("/health");
 app.UseMetricServer();
 app.UseHttpMetrics();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<RecruitmentContext>();
-    db.Database.Migrate();
-}
+// CORS must be before other middleware (as in authorization-service)
+app.UseCors();
+
 app.UseAuthorization();
 app.MapControllers();
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<RecruitmentContext>();
-    db.Database.Migrate();
-}
 
 app.Run();

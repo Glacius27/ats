@@ -12,6 +12,7 @@ import { Dashboard } from './pages/Dashboard';
 import { RecruiterVacancies } from './pages/RecruiterVacancies';
 import { RecruiterCandidates } from './pages/RecruiterCandidates';
 import { Recruitment } from './pages/Recruitment';
+import { ManagerEvaluation } from './pages/ManagerEvaluation';
 import './App.css';
 
 function App() {
@@ -27,15 +28,15 @@ function App() {
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRoles={['Recruiter']}>
                   <Dashboard />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/recruiter/vacancies"
               element={
-                <RoleProtectedRoute requiredRoles={['Recruiter', 'Manager']}>
+                <RoleProtectedRoute requiredRoles={['Recruiter']}>
                   <RecruiterVacancies />
                 </RoleProtectedRoute>
               }
@@ -43,7 +44,7 @@ function App() {
             <Route
               path="/recruiter/candidates"
               element={
-                <RoleProtectedRoute requiredRoles={['Recruiter', 'Manager']}>
+                <RoleProtectedRoute requiredRoles={['Recruiter']}>
                   <RecruiterCandidates />
                 </RoleProtectedRoute>
               }
@@ -51,8 +52,16 @@ function App() {
             <Route
               path="/recruiter/recruitment"
               element={
-                <RoleProtectedRoute requiredRoles={['Recruiter', 'Manager']}>
+                <RoleProtectedRoute requiredRoles={['Recruiter']}>
                   <Recruitment />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/manager/evaluation"
+              element={
+                <RoleProtectedRoute requiredRoles={['Manager']}>
+                  <ManagerEvaluation />
                 </RoleProtectedRoute>
               }
             />

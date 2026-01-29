@@ -36,6 +36,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [authorizedUser, setAuthorizedUser] = useState<UserResponse | undefined>();
   const [roles, setRoles] = useState<string[]>([]);
 
+  // Функция для извлечения ролей из Keycloak token
+  const getRolesFromKeycloakToken = (tokenParsed: KeycloakTokenParsed | undefined): string[] => {
+    if (!tokenParsed) return [];
+    
+    // Получаем роли из realm_access
+    const realmRoles = tokenParsed.realm_access?.roles || [];
+    
+    // Также можно получить роли из resource_access, если нужно
+    // const resourceRoles = Object.values(tokenParsed.resource_access || {})
+    //   .flatMap((access: any) => access.roles || []);
+    
+    return realmRoles;
+  };
+
   useEffect(() => {
     const initKeycloak = async () => {
       try {
@@ -53,6 +67,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (authenticated) {
           keycloak.loadUserProfile().catch(console.error);
+          
+          // Получаем роли из Keycloak token сразу (fallback)
+          const keycloakRoles = getRolesFromKeycloakToken(keycloak.tokenParsed);
+          if (keycloakRoles.length > 0) {
+            setRoles(keycloakRoles);
+            console.log('Initial roles from Keycloak token:', keycloakRoles);
+          }
           
           // Authorize user if already authenticated
           if (keycloak.tokenParsed?.sub) {
@@ -77,6 +98,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setIsAuthenticated(true);
           setToken(keycloak.token);
           setUser(keycloak.tokenParsed);
+          
+          // Получаем роли из Keycloak token сразу (fallback)
+          const keycloakRoles = getRolesFromKeycloakToken(keycloak.tokenParsed);
+          if (keycloakRoles.length > 0) {
+            setRoles(keycloakRoles);
+            console.log('Roles from Keycloak token after login:', keycloakRoles);
+          }
           
           // After successful authentication, authorize user in authorization service
           if (keycloak.tokenParsed?.sub) {
@@ -105,19 +133,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userData = await authorizationService.getUserByKeycloakId(keycloakUserId, authToken);
       setAuthorizedUser(userData);
-      setRoles(userData.roles || []);
+      // Используем роли из authorization service, если они есть
+      const serviceRoles = userData.roles || [];
+      setRoles(serviceRoles);
       console.log('User authorized:', userData);
+      console.log('Roles from authorization service:', serviceRoles);
     } catch (error: any) {
       if (error.response?.status === 404) {
         // User not found in authorization service
-        // This is expected for new users who haven't been created in the system yet
-        console.warn('User not found in authorization service. User may need to be created by admin.');
+        // Fallback: используем роли из Keycloak token
+        console.warn('User not found in authorization service. Using roles from Keycloak token.');
         setAuthorizedUser(undefined);
-        setRoles([]);
+        
+        // Получаем роли из Keycloak token как fallback
+        const currentTokenParsed = keycloak.tokenParsed;
+        const keycloakRoles = getRolesFromKeycloakToken(currentTokenParsed);
+        setRoles(keycloakRoles);
+        console.log('Roles from Keycloak token:', keycloakRoles);
       } else {
         console.error('Failed to authorize user:', error);
         setAuthorizedUser(undefined);
-        setRoles([]);
+        
+        // В случае другой ошибки тоже используем роли из Keycloak token
+        const currentTokenParsed = keycloak.tokenParsed;
+        const keycloakRoles = getRolesFromKeycloakToken(currentTokenParsed);
+        setRoles(keycloakRoles);
       }
     }
   };

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { vacancyService, Vacancy } from '../services/vacancyService';
+import keycloak from '../config/keycloak';
 import './RecruiterVacancies.css';
 
 export const RecruiterVacancies: React.FC = () => {
-  const { token, authorizedUser } = useAuth();
+  const { token, authorizedUser, user } = useAuth();
   const [vacancies, setVacancies] = useState<Vacancy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingVacancy, setEditingVacancy] = useState<Vacancy | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -49,17 +51,39 @@ export const RecruiterVacancies: React.FC = () => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
+      if (!token) {
+        setError('Токен авторизации отсутствует. Пожалуйста, войдите заново.');
+        return;
+      }
+
       if (editingVacancy) {
         await vacancyService.update(editingVacancy.id, formData, token);
+        setSuccessMessage('Вакансия успешно обновлена!');
       } else {
         // При создании добавляем recruiterId
+        // Приоритет: ID из authorization service > Keycloak user ID из контекста > Keycloak user ID напрямую
+        const keycloakUserId = user?.sub || keycloak.tokenParsed?.sub || '';
+        const recruiterId = authorizedUser?.id || keycloakUserId || '';
+        
+        console.log('Creating vacancy with:', {
+          authorizedUser: authorizedUser,
+          authorizedUserId: authorizedUser?.id,
+          keycloakUserIdFromContext: user?.sub,
+          keycloakUserIdDirect: keycloak.tokenParsed?.sub,
+          finalRecruiterId: recruiterId,
+        });
+        
         const createData = {
           ...formData,
-          recruiterId: authorizedUser?.id || '',
+          recruiterId: recruiterId,
         };
+        
+        console.log('Sending create request:', createData);
         await vacancyService.create(createData, token);
+        setSuccessMessage('Вакансия успешно создана!');
       }
       
       setShowCreateForm(false);
@@ -72,9 +96,24 @@ export const RecruiterVacancies: React.FC = () => {
         status: 'Open',
       });
       await fetchVacancies();
+      
+      // Скрыть сообщение об успехе через 3 секунды
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
       console.error('Error saving vacancy:', err);
-      setError(err.response?.data?.message || 'Не удалось сохранить вакансию');
+      let errorMessage = 'Не удалось сохранить вакансию';
+      
+      if (err.response?.status === 401) {
+        errorMessage = 'Ошибка авторизации. Пожалуйста, войдите заново.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'У вас нет прав для создания вакансий.';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -90,6 +129,88 @@ export const RecruiterVacancies: React.FC = () => {
       status: vacancy.status || 'Open',
     });
     setShowCreateForm(true);
+  };
+
+  const handleArchive = async (id: string) => {
+    if (!window.confirm('Перевести вакансию в архив? Она не будет отображаться в публичном разделе.')) {
+      return;
+    }
+
+    try {
+      setError(null);
+      if (!token) {
+        setError('Токен авторизации отсутствует. Пожалуйста, войдите заново.');
+        return;
+      }
+
+      const vacancy = vacancies.find(v => v.id === id);
+      if (!vacancy) {
+        setError('Вакансия не найдена');
+        return;
+      }
+
+      // Получаем полную вакансию с сервера
+      const fullVacancy = await vacancyService.getById(id);
+      
+      // Обновляем только статус, отправляя полную модель
+      await vacancyService.update(id, {
+        title: fullVacancy.title,
+        description: fullVacancy.description,
+        location: fullVacancy.location,
+        department: fullVacancy.department || '',
+        status: 'Archived',
+      }, token);
+      
+      setSuccessMessage('Вакансия переведена в архив');
+      await fetchVacancies();
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      console.error('Error archiving vacancy:', err);
+      let errorMessage = 'Не удалось перевести вакансию в архив';
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      setError(errorMessage);
+    }
+  };
+
+  const handleUnarchive = async (id: string) => {
+    try {
+      setError(null);
+      if (!token) {
+        setError('Токен авторизации отсутствует. Пожалуйста, войдите заново.');
+        return;
+      }
+
+      const vacancy = vacancies.find(v => v.id === id);
+      if (!vacancy) {
+        setError('Вакансия не найдена');
+        return;
+      }
+
+      // Получаем полную вакансию с сервера
+      const fullVacancy = await vacancyService.getById(id);
+      
+      // Обновляем только статус, отправляя полную модель
+      await vacancyService.update(id, {
+        title: fullVacancy.title,
+        description: fullVacancy.description,
+        location: fullVacancy.location,
+        department: fullVacancy.department || '',
+        status: 'Open',
+      }, token);
+      
+      setSuccessMessage('Вакансия восстановлена из архива');
+      await fetchVacancies();
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      console.error('Error unarchiving vacancy:', err);
+      let errorMessage = 'Не удалось восстановить вакансию из архива';
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      setError(errorMessage);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -141,6 +262,12 @@ export const RecruiterVacancies: React.FC = () => {
       {error && (
         <div className="error-message">
           <p>{error}</p>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="success-message">
+          <p>{successMessage}</p>
         </div>
       )}
 
@@ -207,6 +334,7 @@ export const RecruiterVacancies: React.FC = () => {
                   >
                     <option value="Open">Открыта</option>
                     <option value="Closed">Закрыта</option>
+                    <option value="Archived">В архиве</option>
                   </select>
                 </div>
               )}
@@ -236,7 +364,10 @@ export const RecruiterVacancies: React.FC = () => {
                 <div className="vacancy-card-header">
                   <h3>{vacancy.title}</h3>
                   <span className={`vacancy-status ${vacancy.status?.toLowerCase()}`}>
-                    {vacancy.status === 'Open' ? 'Открыта' : 'Закрыта'}
+                    {vacancy.status === 'Open' ? 'Открыта' : 
+                     vacancy.status === 'Closed' ? 'Закрыта' : 
+                     vacancy.status === 'Archived' ? 'В архиве' : 
+                     vacancy.status}
                   </span>
                 </div>
                 <div className="vacancy-card-body">
@@ -250,6 +381,22 @@ export const RecruiterVacancies: React.FC = () => {
                   <button onClick={() => handleEdit(vacancy)} className="btn btn-secondary">
                     Редактировать
                   </button>
+                  {vacancy.status !== 'Archived' && (
+                    <button 
+                      onClick={() => handleArchive(vacancy.id)} 
+                      className="btn btn-archive"
+                    >
+                      В архив
+                    </button>
+                  )}
+                  {vacancy.status === 'Archived' && (
+                    <button 
+                      onClick={() => handleUnarchive(vacancy.id)} 
+                      className="btn btn-unarchive"
+                    >
+                      Из архива
+                    </button>
+                  )}
                   <button onClick={() => handleDelete(vacancy.id)} className="btn btn-danger">
                     Удалить
                   </button>

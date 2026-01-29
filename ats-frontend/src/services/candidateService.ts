@@ -1,4 +1,5 @@
 import axios from 'axios';
+import keycloak from '../config/keycloak';
 
 const API_BASE_URL = process.env.REACT_APP_CANDIDATE_SERVICE_URL || 'http://candidate.local';
 
@@ -52,8 +53,8 @@ candidateApi.interceptors.response.use(
 // Add auth token to requests
 candidateApi.interceptors.request.use(
   (config) => {
-    const keycloak = (window as any).keycloak;
-    if (keycloak && keycloak.token) {
+    // Add token from keycloak if available and not already set
+    if (keycloak && keycloak.token && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${keycloak.token}`;
     }
     return config;
@@ -93,16 +94,32 @@ export const candidateService = {
     
     if (request.vacancyId) {
       formData.append('VacancyId', request.vacancyId);
+      console.log('Creating candidate with vacancyId:', request.vacancyId);
+    } else {
+      console.warn('Creating candidate WITHOUT vacancyId');
     }
     
     if (request.resume) {
       formData.append('Resume', request.resume);
     }
+    
+    // Отладочная информация
+    console.log('Creating candidate with data:', {
+      fullName: request.fullName,
+      email: request.email,
+      phone: request.phone,
+      vacancyId: request.vacancyId,
+      hasResume: !!request.resume,
+      resumeName: request.resume?.name,
+    });
 
     try {
       // Axios automatically sets Content-Type to multipart/form-data with boundary for FormData
       // Don't set it manually, let axios handle it
       const response = await candidateApi.post('', formData);
+      
+      console.log('Candidate created successfully:', response.data);
+      console.log('Created candidate vacancyId:', response.data?.vacancyId);
       
       return response.data;
     } catch (error: any) {
@@ -119,5 +136,21 @@ export const candidateService = {
       
       throw error;
     }
+  },
+
+  updateStatus: async (id: number, status: string, token?: string): Promise<Candidate> => {
+    const config = token ? {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    } : {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    
+    const response = await candidateApi.patch<Candidate>(`/${id}`, { status }, config);
+    return response.data;
   },
 };

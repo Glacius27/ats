@@ -1,4 +1,5 @@
 import axios from 'axios';
+import keycloak from '../config/keycloak';
 
 const API_BASE_URL = process.env.REACT_APP_VACANCY_SERVICE_URL || 'http://vacancy.local';
 
@@ -25,6 +26,12 @@ const vacancyApi = axios.create({
 vacancyApi.interceptors.request.use(
   (config) => {
     console.log('Making request to:', config.url);
+    console.log('Request method:', config.method);
+    console.log('Request data:', config.data);
+    // Add token from keycloak if available and not already set
+    if (keycloak && keycloak.token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${keycloak.token}`;
+    }
     return config;
   },
   (error) => {
@@ -61,20 +68,6 @@ export interface UpdateVacancyRequest {
   status?: string;
 }
 
-// Add auth token to requests
-vacancyApi.interceptors.request.use(
-  (config) => {
-    const keycloak = (window as any).keycloak;
-    if (keycloak && keycloak.token) {
-      config.headers.Authorization = `Bearer ${keycloak.token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
 export const vacancyService = {
   getAll: async (): Promise<Vacancy[]> => {
     const response = await vacancyApi.get<Vacancy[]>('');
@@ -102,7 +95,8 @@ export const vacancyService = {
         Authorization: `Bearer ${token}`,
       },
     } : {};
-    await vacancyApi.put(`/${id}`, { ...request, id }, config);
+    // Используем PATCH для частичных обновлений
+    await vacancyApi.patch(`/${id}`, request, config);
   },
 
   delete: async (id: string, token?: string): Promise<void> => {
